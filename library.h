@@ -1,0 +1,6 @@
+#ifndef KOTVACYAGL_LIBRARY_H
+#define KOTVACYAGL_LIBRARY_H
+
+void hello();
+
+#endif //KOTVACYAGL_LIBRARY_H
