@@ -1,6 +1,6 @@
-#ifndef KOTVACYAGL_LIBRARY_H
-#define KOTVACYAGL_LIBRARY_H
+#ifndef SLOWGL_LIBRARY_H
+#define SLOWGL_LIBRARY_H
 
 void hello();
 
-#endif //KOTVACYAGL_LIBRARY_H
+#endif //SLOWGL_LIBRARY_H
