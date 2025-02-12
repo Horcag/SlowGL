@@ -4,93 +4,73 @@
 
 #include <SFML/Graphics.hpp>
 
+#include "Image/SFMLImage.h"
+
+void draw(sgl::SFMLImage& image){
+    for(unsigned int i = 0; i < image.getSize().x; i++) {
+        for(unsigned int j = 0; j < image.getSize().y; j++) {
+            if((i+1) % (j+1) == 0) image.setPixel({i,j}, sf::Color::Blue);
+        }
+    }
+    image.update();
+}
+
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode({1280, 720}), "ImGui + SFML = <3");
+    // Надо будет все тут менять
+    
+    sf::Vector2u windowSize{1280, 640};
+    sf::RenderWindow window(sf::VideoMode(windowSize), "Lab 1");
     window.setFramerateLimit(60);
-    if (!ImGui::SFML::Init(window))
+    if (!ImGui::SFML::Init(window)){
+        printf("Imgui SFML startup failed\n");
         return -1;
+    }
 
-    sf::RenderWindow childWindow(sf::VideoMode({640, 480}), "ImGui-SFML Child window");
-    childWindow.setFramerateLimit(60);
-    if (!ImGui::SFML::Init(childWindow))
-        return -1;
+    int resolution = 16;
+    sgl::SFMLImage image(sf::Vector2u(resolution, resolution), sf::Color::Black);
+    image.setCenter(sf::Vector2f(windowSize / 2u));
+    image.setPixelSize({512,512});
 
     sf::Clock deltaClock;
     while (window.isOpen())
     {
-        // Main window event processing
         while (const auto event = window.pollEvent())
         {
             ImGui::SFML::ProcessEvent(window, *event);
+
             if (event->is<sf::Event::Closed>())
             {
-                if (childWindow.isOpen())
-                {
-                    childWindow.close();
-                }
                 window.close();
-                ImGui::SFML::Shutdown(); // will shutdown all windows
-                return 0;                // return here so that we don't call Update/Render
             }
-        }
-
-        // Child window event processing
-        if (childWindow.isOpen())
-        {
-            while (const auto event = childWindow.pollEvent())
+            else if (const auto* resized = event->getIf<sf::Event::Resized>())
             {
-                ImGui::SFML::ProcessEvent(childWindow, *event);
-                if (event->is<sf::Event::Closed>())
-                {
-                    childWindow.close();
-                    ImGui::SFML::Shutdown(childWindow);
-                }
+                windowSize = resized->size;
+                image.setCenter(sf::Vector2f(windowSize / 2u));
             }
         }
 
-        // Update
         const sf::Time dt = deltaClock.restart();
         ImGui::SFML::Update(window, dt);
-        if (childWindow.isOpen())
-        {
-            ImGui::SFML::Update(childWindow, dt);
-        }
 
-        // Add ImGui widgets in the first window
-        ImGui::SFML::SetCurrentWindow(window);
-        ImGui::Begin("Hello, world!");
+        ImGui::ShowDemoWindow();
+
+        ImGui::Begin("Lab 1!");
+        ImGui::Text("FPS: %.1f", 1.0f/dt.asSeconds());
+        if(ImGui::SliderInt("Resoultion", &resolution, 16, 512)) {
+            image.resize(sf::Vector2u(resolution, resolution));
+        }
         ImGui::Button("Look at this pretty button");
         ImGui::End();
-        ImGui::ShowDemoWindow();
-        // Add ImGui widgets in the child window
-        if (childWindow.isOpen())
-        {
-            ImGui::SFML::SetCurrentWindow(childWindow);
-            ImGui::Begin("Works in a second window!");
-            ImGui::Button("Example button");
-            ImGui::End();
-        }
 
-        // Main window drawing
-        sf::CircleShape shape(100.f);
-        shape.setFillColor(sf::Color::Green);
+        draw(image);
 
         window.clear();
-        window.draw(shape);
+        window.draw(image);
         ImGui::SFML::Render(window);
         window.display();
-
-        // Child window drawing
-        if (childWindow.isOpen())
-        {
-            sf::CircleShape shape2(50.f);
-            shape2.setFillColor(sf::Color::Red);
-
-            childWindow.clear();
-            childWindow.draw(shape2);
-            ImGui::SFML::Render(childWindow);
-            childWindow.display();
-        }
     }
+
+    ImGui::SFML::Shutdown();
+    return 0;
 }

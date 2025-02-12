@@ -4,6 +4,8 @@ project(SlowGL LANGUAGES CXX)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
+file(GLOB_RECURSE sources      src/*.cpp src/*.h)
+
 # Fetch SFML
 include(FetchContent)
 FetchContent_Declare(SFML
@@ -35,13 +37,15 @@ FetchContent_Declare(ImGui-SFML
         SYSTEM)
 FetchContent_MakeAvailable(ImGui-SFML)
 
-
 # Add executable and sources
-add_executable(${PROJECT_NAME}
-        src/main.cpp
-)
+add_executable(${PROJECT_NAME} ${sources})
+
+# Add examples
+option(SLOWGL_BUILD_EXAMPLES "Build SlowGL examples" OFF)
+if(SLOWGL_BUILD_EXAMPLES)
+        add_subdirectory(examples)
+endif()
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics ImGui-SFML::ImGui-SFML)
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
-

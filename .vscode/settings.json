@@ -1,0 +1,8 @@
+{
+    "cmake.configureSettings": {
+        "SLOWGL_BUILD_EXAMPLES": false
+    },
+    "files.associations": {
+        "optional": "cpp"
+    }
+}

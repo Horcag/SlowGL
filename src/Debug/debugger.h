@@ -1,0 +1,6 @@
+
+class Debugger {
+
+    void ShowDebugWindow();
+
+};
