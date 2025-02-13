@@ -4,7 +4,7 @@ project(SlowGL LANGUAGES CXX)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
-file(GLOB_RECURSE sources      src/*.cpp src/*.h)
+file(GLOB_RECURSE sources src/*.cpp src/*.h)
 
 # Fetch SFML
 include(FetchContent)
@@ -15,7 +15,6 @@ FetchContent_Declare(SFML
         EXCLUDE_FROM_ALL
         SYSTEM)
 FetchContent_MakeAvailable(SFML)
-
 
 # Fetch ImGui
 FetchContent_Declare(ImGui
@@ -37,6 +36,15 @@ FetchContent_Declare(ImGui-SFML
         SYSTEM)
 FetchContent_MakeAvailable(ImGui-SFML)
 
+# Fetch Google Test
+FetchContent_Declare(googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG v1.14.0  # Исправленный тег
+        GIT_SHALLOW ON
+        EXCLUDE_FROM_ALL
+        SYSTEM)
+FetchContent_MakeAvailable(googletest)
+
 # Add executable and sources
 add_executable(${PROJECT_NAME} ${sources})
 
@@ -49,3 +57,22 @@ endif()
 # Link libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics ImGui-SFML::ImGui-SFML)
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
+
+# Add tests
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+        enable_testing()
+
+        # Add test executable
+        add_executable(OBJParserTests
+                tests/OBJParser_test.cpp
+                src/OBJParser/OBJParser.cpp
+                src/OBJParser/OBJParser.h # Добавляем реализацию
+        )
+
+        # Link Google Test
+        target_link_libraries(OBJParserTests PRIVATE gtest_main)
+
+        # Add tests to CMake testing
+        include(GoogleTest)
+        gtest_discover_tests(OBJParserTests)
+endif()
