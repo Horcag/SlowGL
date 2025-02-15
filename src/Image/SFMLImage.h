@@ -19,9 +19,10 @@ namespace sgl {
         void update();
         void resize(sf::Vector2u new_size);
         void draw(sf::RenderTarget &target, sf::RenderStates states) const;
-        void setPixelSize(sf::Vector2u pixel_size);
-        void setCenter(sf::Vector2f new_center);
         sf::Vector2u getSize() const;
+
+        SFMLImage(const SFMLImage&) = delete;
+        SFMLImage& operator= (const SFMLImage&) = delete;
 
     private:
         void transformSprite();

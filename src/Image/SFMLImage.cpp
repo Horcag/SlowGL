@@ -31,19 +31,6 @@ void sgl::SFMLImage::draw(sf::RenderTarget &target, sf::RenderStates states) con
     target.draw(sprite, states);
 }
 
-void sgl::SFMLImage::setPixelSize(sf::Vector2u pixel_size)
-{
-    size.x = pixel_size.x;
-    size.y = pixel_size.y;
-    transformSprite();
-}
-
-void sgl::SFMLImage::setCenter(sf::Vector2f new_center)
-{
-    center = new_center;
-    transformSprite();
-}
-
 sf::Vector2u sgl::SFMLImage::getSize() const
 {
     return image.getSize();
@@ -52,7 +39,7 @@ sf::Vector2u sgl::SFMLImage::getSize() const
 void sgl::SFMLImage::transformSprite()
 {
     sf::Vector2u txSize = texture.getSize();
-    sprite.setOrigin({float(txSize.x)/2.f, float(txSize.y)/2.f});
-    sprite.setPosition(center);
-    sprite.setScale({size.x / txSize.x, size.y / txSize.y});
+    sprite.setOrigin(sf::Vector2f(txSize) / 2.f);
+    //sprite.setPosition(center);
+    //sprite.setScale({size.x / txSize.x, size.y / txSize.y});
 }
