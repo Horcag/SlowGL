@@ -25,17 +25,15 @@
     file.close();
 }*/
 
-OBJParser::OBJParser() = default;
-
-void OBJParser::setBuff(const std::vector<char>& buff) {
-    buffer = buff;
+std::vector<std::tuple<double, double, double>> OBJParser::get_bufferV() {
+    return bufferV;
 }
 
-std::vector<char> OBJParser::getBuff() const {
-    return buffer;
+void OBJParser::set_BufferV(const std::vector<std::tuple<double, double, double>>& buffer) {
+    bufferV = buffer;
 }
 
-std::vector<std::tuple<double, double, double> > OBJParser::parseV(const std::string& fileName) const{
+std::vector<std::tuple<double, double, double>> OBJParser::parseV(const std::string& fileName){
     std::ifstream file(fileName, std::ios::binary);
     if (!file.is_open()) {
         std::cerr << "Error opening file " << fileName << std::endl;
@@ -49,12 +47,14 @@ std::vector<std::tuple<double, double, double> > OBJParser::parseV(const std::st
         std::string pref;
         lineStream >> pref >> x >> y >> z;
         if (pref == "v") {
-           result.emplace_back(x, y, z);
+            result.emplace_back(x, y, z);
         }
         if (pref == "vt") {
             return result;
         }
     }
+    set_BufferV(result);
+    return result;
 }
 
 

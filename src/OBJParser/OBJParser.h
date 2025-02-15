@@ -8,17 +8,14 @@ class OBJParser
 {
 public:
    // explicit OBJParser(const std::string& fileName);
-
-    void setBuff(const std::vector<char>& buff);
-    std::vector<char> getBuff() const;
-    std::vector<std::tuple<double,double,double>> parseV(const std::string& fileName) const;
-    OBJParser();
+    std::vector<std::tuple<double, double, double>> get_bufferV();
+    void set_BufferV(const std::vector<std::tuple<double, double, double>>& buffer);
+    std::vector<std::tuple<double,double,double>> parseV(const std::string& fileName);
 private:
-    std::vector<char> buffer;
-    std::vector<char> bufferV;
-    std::vector<char> bufferVT;
-    std::vector<char> bufferVN;
-    std::vector<char> bufferF;
+    std::vector<std::tuple<double, double, double>> bufferV;
+    std::vector<std::tuple<double, double, double>> bufferVT;
+    std::vector<std::tuple<double, double, double>> bufferVN;
+    std::vector<std::tuple<double, double, double>> bufferF;
 };
 
 #endif //PARSER_H
