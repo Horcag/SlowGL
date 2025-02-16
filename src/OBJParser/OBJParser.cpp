@@ -4,42 +4,22 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
-
-
-/*OBJParser::OBJParser(const std::string& fileName) {
-    std::ifstream file(fileName, std::ios::binary);
-    if (!file.is_open()) {
-        std::cerr << "Error opening file " << fileName << std::endl;
-        return;
-    }
-    file.seekg(0, std::ios::end);
-    const std::streamsize size = file.tellg();
-    file.seekg(0, std::ios::beg);
-    std::vector<char> buffer(size);
-    if (file.read(buffer.data(), size)) {
-        std::cout << "Файл успешно прочитан в массив char." << std::endl;
-        setBuff(buffer);
-    } else {
-        std::cerr << "Ошибка при чтении файла!" << std::endl;
-    }
-    file.close();
-}*/
-
-std::vector<std::tuple<double, double, double>> OBJParser::get_bufferV() {
-    return bufferV;
+#include "Buffer.h"
+std::vector<sf::Vector3f> OBJParser::get_bufferV() const{
+    return buffer.getBufferV();
 }
 
-void OBJParser::set_BufferV(const std::vector<std::tuple<double, double, double>>& buffer) {
-    bufferV = buffer;
+void OBJParser::set_BufferV(const  std::vector<sf::Vector3f>& buffer) {
+    this->buffer.setBufferV(buffer);
 }
 
-std::vector<std::tuple<double, double, double>> OBJParser::parseV(const std::string& fileName){
+std::vector<sf::Vector3f> OBJParser::parseV(const std::string& fileName){
     std::ifstream file(fileName, std::ios::binary);
     if (!file.is_open()) {
         std::cerr << "Error opening file " << fileName << std::endl;
         return {};
     }
-    std::vector<std::tuple<double, double, double> > result;
+    std::vector<sf::Vector3f> result;
     std::string line;
     while (std::getline(file, line)) {
         std::istringstream lineStream(line);
@@ -57,5 +37,22 @@ std::vector<std::tuple<double, double, double>> OBJParser::parseV(const std::str
     return result;
 }
 
-
-
+std::vector<sf::Vector3f> OBJParser::parseV(std::ifstream& file)
+{
+    std::vector<sf::Vector3f> result;
+    std::string line;
+    while (std::getline(file, line)) {
+        std::istringstream lineStream(line);
+        double x, y, z;
+        std::string pref;
+        lineStream >> pref >> x >> y >> z;
+        if (pref == "v") {
+            result.emplace_back(x, y, z);
+        }
+        if (pref == "vt") {
+            return result;
+        }
+    }
+    set_BufferV(result);
+    return result;
+}

@@ -46,7 +46,11 @@ FetchContent_Declare(googletest
 FetchContent_MakeAvailable(googletest)
 
 # Add executable and sources
-add_executable(${PROJECT_NAME} ${sources})
+add_executable(${PROJECT_NAME} ${sources}
+        src/OBJParser/OBJParser.cpp
+        src/OBJParser/OBJParser.h
+        src/OBJParser/OBJParser.cpp
+        src/OBJParser/OBJParser.h)
 
 # Add examples
 option(SLOWGL_BUILD_EXAMPLES "Build SlowGL examples" OFF)
@@ -65,8 +69,6 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
         # Add test executable
         add_executable(OBJParserTests
                 tests/OBJParser_test.cpp
-                src/OBJParser/OBJParser.cpp
-                src/OBJParser/OBJParser.h # Добавляем реализацию
         )
 
         # Link Google Test
