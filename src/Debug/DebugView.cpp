@@ -34,7 +34,10 @@ void sgl::DebugView::ProcessEvent(const sf::Event &event)
     }
     else if (const auto* resized = event.getIf<sf::Event::Resized>())
     {
+        float zoom = (view.getSize().y / screenSize.y);
         screenSize = sf::Vector2f(resized->size);
+        view.setSize(screenSize);
+        view.zoom(zoom);
     }
 }
 
