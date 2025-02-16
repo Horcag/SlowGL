@@ -6,6 +6,10 @@ option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
 file(GLOB_RECURSE sources src/*.cpp src/*.h)
 
+get_filename_component(full_path_main_cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp ABSOLUTE)
+
+list(REMOVE_ITEM sources "${full_path_main_cpp}")
+
 # Fetch SFML
 include(FetchContent)
 FetchContent_Declare(SFML
@@ -46,11 +50,7 @@ FetchContent_Declare(googletest
 FetchContent_MakeAvailable(googletest)
 
 # Add executable and sources
-add_executable(${PROJECT_NAME} ${sources}
-        src/OBJParser/OBJParser.cpp
-        src/OBJParser/OBJParser.h
-        src/OBJParser/OBJParser.cpp
-        src/OBJParser/OBJParser.h)
+add_executable(${PROJECT_NAME} src/main.cpp ${sources})
 
 # Add examples
 option(SLOWGL_BUILD_EXAMPLES "Build SlowGL examples" OFF)
@@ -69,10 +69,14 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
         # Add test executable
         add_executable(OBJParserTests
                 tests/OBJParser_test.cpp
+                ${sources}
         )
 
+        target_include_directories(OBJParserTests PUBLIC ${CMAKE_SOURCE_DIR}/src)
+
         # Link Google Test
-        target_link_libraries(OBJParserTests PRIVATE gtest_main)
+        target_link_libraries(OBJParserTests PRIVATE gtest_main sfml-graphics ImGui-SFML::ImGui-SFML)
+        target_compile_features(OBJParserTests PRIVATE cxx_std_17)
 
         # Add tests to CMake testing
         include(GoogleTest)

@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
-#include "../src/OBJParser/OBJParser.h"
+#include "OBJParser/OBJParser.h"
+
 TEST(OBJParser_test,Parser_test) {
     const auto parser = new OBJParser;
     const auto res = parser->parseV("model_1.obj");
