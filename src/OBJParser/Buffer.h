@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
 #include <SFML/System/Vector3.hpp>
+
+#include "SFML/System/Vector2.hpp"
 #ifndef BUFFER_H
 #define BUFFER_H
 
@@ -9,7 +11,7 @@
 class Buffer {
 private:
     std::vector<sf::Vector3f> bufferV;
-    std::vector<sf::Vector3f> bufferVT;
+    std::vector<sf::Vector2f> bufferVT;
     std::vector<sf::Vector3f> bufferVN;
     std::vector<sf::Vector3f> bufferF;
 
@@ -17,7 +19,7 @@ public:
     // Геттеры
     std::vector<sf::Vector3f> getBufferV() const;
 
-    std::vector<sf::Vector3f> getBufferVT() const;
+    std::vector<sf::Vector2f> getBufferVT() const;
 
     std::vector<sf::Vector3f> getBufferVN() const;
 
@@ -25,7 +27,7 @@ public:
 
     // Сеттеры
     void setBufferV(const std::vector<sf::Vector3f>& newBufferV);
-    void setBufferVT(const std::vector<sf::Vector3f>& newBufferVT);
+    void setBufferVT(const std::vector<sf::Vector2f>& newBufferVT);
     void setBufferVN(const std::vector<sf::Vector3f>& newBufferVN);
     void setBufferF(const std::vector<sf::Vector3f>& newBufferF);
 };

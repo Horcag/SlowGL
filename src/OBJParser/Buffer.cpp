@@ -4,7 +4,7 @@ std::vector<sf::Vector3f> Buffer::getBufferV() const {
     return bufferV;
 }
 
-std::vector<sf::Vector3f> Buffer::getBufferVT() const {
+std::vector<sf::Vector2f> Buffer::getBufferVT() const {
     return bufferVT;
 }
 
@@ -20,7 +20,7 @@ void Buffer::setBufferV(const std::vector<sf::Vector3f>& newBufferV) {
     bufferV = newBufferV;
 }
 
-void Buffer::setBufferVT(const std::vector<sf::Vector3f>& newBufferVT) {
+void Buffer::setBufferVT(const std::vector<sf::Vector2f>& newBufferVT) {
     bufferVT = newBufferVT;
 }
 
