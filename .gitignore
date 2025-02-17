@@ -364,6 +364,7 @@ $RECYCLE.BIN/
 # *.ipr
 
 # CMake
+build/
 
 # Mongo Explorer plugin
 
