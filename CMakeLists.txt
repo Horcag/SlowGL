@@ -40,6 +40,14 @@ FetchContent_Declare(ImGui-SFML
         SYSTEM)
 FetchContent_MakeAvailable(ImGui-SFML)
 
+FetchContent_Declare(nfd
+        GIT_REPOSITORY https://github.com/btzy/nativefiledialog-extended.git
+        GIT_TAG v1.2.1
+        GIT_SHALLOW ON
+        EXCLUDE_FROM_ALL
+        SYSTEM)
+FetchContent_MakeAvailable(nfd)
+
 # Fetch Google Test
 FetchContent_Declare(googletest
         GIT_REPOSITORY https://github.com/google/googletest.git
@@ -59,7 +67,7 @@ if(SLOWGL_BUILD_EXAMPLES)
 endif()
 
 # Link libraries
-target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics ImGui-SFML::ImGui-SFML)
+target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics ImGui-SFML::ImGui-SFML nfd)
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 
 # Add tests

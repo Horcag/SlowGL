@@ -7,6 +7,8 @@
 #include "Image/SFMLImage.h"
 #include "Debug/DebugView.h"
 
+#include <nfd.hpp>
+
 void draw(sgl::SFMLImage& image, int64_t time){
     image.clear();
     for(unsigned int i = 0; i < image.getSize().x; i++) {
@@ -17,20 +19,51 @@ void draw(sgl::SFMLImage& image, int64_t time){
     image.update();
 }
 
-int line_method_combo(){
+struct LineMethodOptions {
+    int dotted_line_dots = 100;
+};
+
+int line_method_combo(LineMethodOptions& options){
     static const char* methods[] = { "dotted_line", "dotted_line_v2", "x_loop_line", "x_loop_line_hotfix_1", "x_loop_line_hotfix_2", "x_loop_line_v2", "x_loop_line_v2_no_y_calc", "x_loop_line_v2_no_y_calc_for_some_unknown_reason", "bresenham line" };
     static int current_method = 0;
 
     ImGui::Combo("Line method", &current_method, methods, IM_ARRAYSIZE(methods));
 
+    if(current_method == 0){
+        if(ImGui::DragInt("Dots", &options.dotted_line_dots, 1.f, 16, 512))
+            if(options.dotted_line_dots <= 0 || options.dotted_line_dots >= 2048)
+                options.dotted_line_dots = 100;
+    }
+
     return current_method;
+}
+
+bool model_select(char* filename){
+    ImGui::InputText("3D model", filename, 255, ImGuiInputTextFlags_CharsNoBlank);
+    if(ImGui::Button("Select file")){
+        NFD::UniquePath outPath;
+        nfdfilteritem_t filterItem[1] = {{"3D model", "obj"}};
+
+        nfdresult_t save_result = NFD::OpenDialog(outPath, filterItem, 1);
+
+        if(save_result == NFD_OKAY){
+            std::strncpy(filename, outPath.get(), 255);
+            return true;
+        }
+    }
+    
+    ImGui::SameLine();
+
+    if(ImGui::Button("Open")) return true;
+
+    return false;
 }
 
 const char* previews[] = { "1. Image manipulation", "2. Straight lines", "3. 3D Model", "4. 3D Model vertices", "5. 3D Model (Polygons)", "6. 3D Model edges" };
 
 int main()
 {
-    //Ладно наврал не будем менять
+    NFD::Guard nfdGuard;
 
     sf::Vector2u windowSize{1280, 640};
     sf::RenderWindow window(sf::VideoMode(windowSize), "Lab 1");
@@ -39,6 +72,10 @@ int main()
         printf("Imgui SFML startup failed\n");
         return -1;
     }
+
+    static char model_path[255]{};
+    LineMethodOptions lineOptions;
+
 
     int resolution = 16;
     sgl::SFMLImage image(sf::Vector2u(resolution, resolution), sf::Color::Black);
@@ -92,7 +129,6 @@ int main()
         case 0: //1. Работа с изображениями.
         {
             static int rgb[3] = { 0, 0, 0 };
-
             for (int i = 0; i < 3; i++)
             {
                 //if (i > 0) ImGui::SameLine();
@@ -112,7 +148,7 @@ int main()
         break;
         case 1: //2. Отрисовка прямых линий 
         {
-            line_method_combo();
+            line_method_combo(lineOptions);
         }
         break;
         case 2: //3. Работа с трёхмерной моделью (вершины) 
@@ -123,7 +159,7 @@ int main()
 
         break;
         case 4: //5. Работа с трёхмерной моделью (полигоны)
-
+            model_select(model_path);
         break;
         case 5: //6. Отрисовка рёбер трёхмерной модели
 
@@ -134,10 +170,21 @@ int main()
 
         ImGui::Spacing();
 
-        ImGui::SeparatorText("File");
+        ImGui::SeparatorText("Image");
 
         static char filename[255]{};
-        ImGui::InputText("Filename", filename, 255, ImGuiInputTextFlags_CharsNoBlank);
+        ImGui::InputText("File", filename, 255, ImGuiInputTextFlags_CharsNoBlank);
+        if(ImGui::Button("Save As")){
+            NFD::UniquePath outPath;
+            nfdfilteritem_t filterItem[1] = {{"Image/png", "png"}};
+
+            nfdresult_t save_result = NFD::SaveDialog(outPath, filterItem, 1, NULL, "test.png");
+
+            if(save_result == NFD_OKAY){
+                std::strncpy(filename, outPath.get(), 255);
+                image.saveToFile(std::string(filename));
+            }
+        }
         ImGui::SameLine();
         if(ImGui::Button("Save")){
             image.saveToFile(std::string(filename) + ".png");
@@ -158,5 +205,6 @@ int main()
     }
 
     ImGui::SFML::Shutdown();
+    NFD_Quit();
     return 0;
 }
