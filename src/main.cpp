@@ -44,11 +44,9 @@ int main()
     sgl::SFMLImage image(sf::Vector2u(resolution, resolution), sf::Color::Black);
     sgl::DebugView debugView(sf::Vector2f(windowSize), 0.05f);
 
-    sf::Clock mainClock;
-    mainClock.start();
     sf::Clock deltaClock;
-    sf::Clock perfClock;
-    sf::Time perfTime;
+    //sf::Clock perfClock;
+    //sf::Time perfTime;
     while (window.isOpen())
     {
         while (const auto event = window.pollEvent())
@@ -56,13 +54,9 @@ int main()
             ImGui::SFML::ProcessEvent(window, *event);
 
             if (event->is<sf::Event::Closed>())
-            {
                 window.close();
-            }
             else if (const auto* resized = event->getIf<sf::Event::Resized>())
-            {
                 windowSize = resized->size;
-            }
 
             if(!ImGui::GetIO().WantCaptureMouse && event.has_value()) debugView.ProcessEvent(event.value());
         }
@@ -74,7 +68,7 @@ int main()
 
         ImGui::Begin("Lab 1!");
         ImGui::Text("FPS: %.1f", 1.0f/dt.asSeconds());
-        ImGui::Text("Render time: %lluus", perfTime.asMicroseconds());
+        //ImGui::Text("Render time: %lluus", perfTime.asMicroseconds());
         
         ImGui::SeparatorText("View");
         if(ImGui::Button("Reset view")) debugView.ResetView();
@@ -122,7 +116,7 @@ int main()
         }
         break;
         case 2: //3. Работа с трёхмерной моделью (вершины) 
-
+        
         break;
 
         case 3: //4. Отрисовка вершин трёхмерной модели 
