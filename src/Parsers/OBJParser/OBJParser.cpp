@@ -5,32 +5,9 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
-#include "Buffer.h"
+#include "Model3D.h"
 
-std::vector<sf::Vector3f> OBJParser::parseV(const std::string &fileName) {
-    std::ifstream file(fileName, std::ios::binary);
-    if (!file.is_open()) {
-        std::cerr << "Error opening file " << fileName << std::endl;
-        return {};
-    }
-    std::vector<sf::Vector3f> result;
-    std::string line;
-    double x, y, z;
-    while (std::getline(file, line)) {
-        std::istringstream lineStream(line);
-        std::string pref;
-        lineStream >> pref >> x >> y >> z;
-        if (pref == "v") {
-            result.emplace_back(x, y, z);
-        }
-        if (pref == "vt") {
-            return result;
-        }
-    }
-    return result;
-}
-
-std::vector<sf::Vector3f> OBJParser::parseV(std::ifstream &file) {
+std::vector<sf::Vector3f> OBJParser::parse_vertex(std::ifstream &file) const {
     std::vector<sf::Vector3f> result;
     std::string line;
     double x, y, z;
@@ -41,13 +18,15 @@ std::vector<sf::Vector3f> OBJParser::parseV(std::ifstream &file) {
         if (pref == "v") {
             result.emplace_back(x, y, z);
         } else if (pref == "vt") {
+            file.seekg(0, std::ios::beg);
             return result;
         }
     }
+    file.seekg(0, std::ios::beg);
     return result;
 }
 
-std::vector<sf::Vector2f> OBJParser::parseVt(std::ifstream &file) {
+std::vector<sf::Vector2f> OBJParser::parse_vertex_texture(std::ifstream &file) const {
     std::vector<sf::Vector2f> result;
     std::string line;
     double x, y;
@@ -57,16 +36,35 @@ std::vector<sf::Vector2f> OBJParser::parseVt(std::ifstream &file) {
         lineStream >> pref >> x >> y;
         if (pref == "vt") {
             result.emplace_back(x, y);
-        } else if (pref != "vt") {
-            continue;
-        } else if (pref == "f") {
+        } else if (pref == "vn") {
+            file.seekg(0, std::ios::beg);
             return result;
         }
     }
+    file.seekg(0, std::ios::beg);
     return result;
 }
 
-std::vector<Face> OBJParser::parseF(std::ifstream &file) {
+std::vector<sf::Vector3f> OBJParser::parse_vertex_normal(std::ifstream &file) const {
+    std::vector<sf::Vector3f> result;
+    std::string line;
+    double x, y, z;
+    while (std::getline(file, line)) {
+        std::istringstream lineStream(line);
+        std::string pref;
+        lineStream >> pref >> x >> y >> z;
+        if (pref == "vn") {
+            result.emplace_back(x, y, z);
+        } else if (pref == "f") {
+            file.seekg(0, std::ios::beg);
+            return result;
+        }
+    }
+    file.seekg(0, std::ios::beg);
+    return result;
+}
+
+std::vector<Face> OBJParser::parse_faces(std::ifstream &file) const {
     std::vector<Face> result;
     Face face{};
     std::string line;
@@ -85,5 +83,15 @@ std::vector<Face> OBJParser::parseF(std::ifstream &file) {
             result.push_back(face);
         }
     }
+    file.seekg(0, std::ios::beg);
     return result;
+}
+
+Model3D OBJParser::parse(std::ifstream &file) const {
+    Model3D model;
+    model.set_vertex(parse_vertex(file));
+    model.set_vertex_texture(parse_vertex_texture(file));
+    model.set_vertex_normal(parse_vertex_normal(file));
+    model.set_faces(parse_faces(file));
+    return model;
 }
