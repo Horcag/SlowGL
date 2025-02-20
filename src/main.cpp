@@ -65,7 +65,7 @@ void draw_line(sgl::SFMLImage& image, const LineMethodOptions& opts, sf::Vector2
     case 7:
         sgl::render::draw_x_loop_dotted_line_no_y_v2(image, start, end, color);
     case 8:
-        sgl::render::draw_brezenham(image, start, end, color);
+        sgl::render::draw_bresenham(image, start, end, color);
     default:
         break;
     }
