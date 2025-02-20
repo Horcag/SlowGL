@@ -3,7 +3,7 @@
 #include "imgui-SFML.h" // for ImGui::SFML::* functions and SFML-specific overloads
 
 #include <SFML/Graphics.hpp>
-
+#include "render/lines.h"
 #include "Image/SFMLImage.h"
 #include "Debug/DebugView.h"
 #include "Inter-VariableFont.h"
