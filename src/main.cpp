@@ -228,8 +228,9 @@ int main() {
                 image.clear();
                 sf::Vector2f center(resolution / 2, resolution / 2);
                 for (int i = 0; i < 13; i++) {
-                    double ang = ((double)i / 6.) * M_PI;
-                    sf::Vector2f offset = sf::Vector2f(cos(ang), sin(ang)) * (float)resolution * 0.95f;
+                    double ang = (static_cast<double>(i) / 6.) * M_PI;
+                    const sf::Vector2f offset = sf::Vector2f(cos(ang), sin(ang)) * static_cast<float>(resolution) *
+                                                0.95f;
                     draw_line(image, lineOptions, sf::Vector2u(center), sf::Vector2u(center + offset),
                               sf::Color::White);
                 }
