@@ -8,8 +8,6 @@ namespace sgl::render {
 
     void draw_dotted_line_fix1(sgl::SFMLImage&image, sf::Vector2u, sf::Vector2u, sf::Color);
 
-    void draw_dotted_line_fix2(sgl::SFMLImage&image, sf::Vector2u, sf::Vector2u, sf::Color);
-
     void draw_dotted_line_loop_v1(sgl::SFMLImage&image, sf::Vector2u, sf::Vector2u, sf::Color);
 
     void draw_dotted_line_loop_fix1(sgl::SFMLImage&image, sf::Vector2u, sf::Vector2u, sf::Color);
