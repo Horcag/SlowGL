@@ -24,6 +24,8 @@ public:
     // Геттеры
     std::vector<sf::Vector3f> get_vertex() const;
 
+    std::array<sf::Vector3f, 3> get_vertexes(int i) const;
+
     std::vector<sf::Vector2f> get_vertex_texture() const;
 
     std::vector<sf::Vector3f> get_vertex_normal() const;
