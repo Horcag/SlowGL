@@ -165,7 +165,6 @@ int main() {
                 debugView.ProcessEvent(event.value());
             }
         }
-        if (!window.isOpen()) break;
 
 
         const sf::Time dt = deltaClock.restart();
@@ -227,14 +226,14 @@ int main() {
 
                 image.clear();
                 sf::Vector2f center(resolution / 2, resolution / 2);
-                for (int i = 0; i < 13; i++) {
-                    double ang = (static_cast<double>(i) / 6.) * M_PI;
+                for (int i = 0; i <= 13; i++) {
+                    double ang = (static_cast<double>(i) / 13. * 2.) * M_PI;
                     const sf::Vector2f offset = sf::Vector2f(cos(ang), sin(ang)) * static_cast<float>(resolution) *
                                                 0.45f;
                     draw_line(image, lineOptions, sf::Vector2u(center), sf::Vector2u(center + offset),
                               sf::Color::White);
                 }
-
+                image.update();
                 break;
             }
             case 2: {
@@ -289,8 +288,8 @@ int main() {
         ImGui::SFML::Render(window);
         window.display();
     }
-
-    ImGui::SFML::Shutdown();
+    
     NFD_Quit();
+    ImGui::SFML::Shutdown();
     return 0;
 }
