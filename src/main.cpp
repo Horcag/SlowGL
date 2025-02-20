@@ -9,7 +9,7 @@
 #include "Inter-VariableFont.h"
 #include <string>
 #include <nfd.hpp>
-#define USE_MATH_DEFINES
+#define _USE_MATH_DEFINES
 #include <cmath>
 
 void draw(sgl::SFMLImage&image, int64_t time) {
