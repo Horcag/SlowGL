@@ -22,25 +22,36 @@ void draw(sgl::SFMLImage&image, int64_t time) {
 
 struct LineMethodOptions {
     int dotted_line_dots = 100;
+    int current_method = 0;
 };
 
-int line_method_combo(LineMethodOptions&options) {
+void line_method_combo(LineMethodOptions&options) {
     static const char* methods[] = {
         "dotted_line", "dotted_line_v2", "x_loop_line", "x_loop_line_hotfix_1", "x_loop_line_hotfix_2",
         "x_loop_line_v2", "x_loop_line_v2_no_y_calc", "x_loop_line_v2_no_y_calc_for_some_unknown_reason",
         "bresenham line"
     };
-    static int current_method = 0;
+    
 
-    ImGui::Combo("Line method", &current_method, methods, IM_ARRAYSIZE(methods));
+    ImGui::Combo("Line method", &options.current_method, methods, IM_ARRAYSIZE(methods));
 
-    if (current_method == 0) {
+    if (options.current_method == 0) {
         if (ImGui::DragInt("Dots", &options.dotted_line_dots, 1.f, 16, 512))
             if (options.dotted_line_dots <= 0 || options.dotted_line_dots >= 2048)
                 options.dotted_line_dots = 100;
     }
+}
 
-    return current_method;
+void draw_line_method(const LineMethodOptions& opts, sf::Vector2u start, sf::Vector2u end){
+    switch (opts.current_method)
+    {
+    case 0:
+        /* code */
+        break;
+    
+    default:
+        break;
+    }
 }
 
 bool model_select(char* filename) {
@@ -186,7 +197,6 @@ int main() {
             break;
             case 1: {
                 //2. Отрисовка прямых линий
-
                 line_method_combo(lineOptions);
                 break;
             }
