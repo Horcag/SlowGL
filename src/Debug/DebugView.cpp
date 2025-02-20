@@ -47,6 +47,11 @@ void sgl::DebugView::ResetView()
     view.setSize(screenSize);
 }
 
+void sgl::DebugView::Zoom(float zoom)
+{
+    view.zoom(zoom);
+}
+
 const sf::View& sgl::DebugView::getView()
 {
     return view;

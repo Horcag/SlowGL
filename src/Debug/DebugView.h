@@ -14,6 +14,7 @@ namespace sgl {
         DebugView(sf::Vector2f size, float scrollSpeed);
         void ProcessEvent(const sf::Event& event);
         void ResetView();
+        void Zoom(float zoom);
         const sf::View& getView();
     
     private:

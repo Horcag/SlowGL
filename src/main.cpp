@@ -178,6 +178,10 @@ int main() {
 
         ImGui::SeparatorText("View");
         if (ImGui::Button("Reset view")) debugView.ResetView();
+        ImGui::SameLine();
+        if (ImGui::Button("+")) debugView.Zoom(1.05f);
+        ImGui::SameLine();
+        if (ImGui::Button("-")) debugView.Zoom(0.95f);
         ImGui::SeparatorText("Render");
         if (ImGui::DragInt("Resolution", &resolution, 1.f, 16, 512)) {
             if (resolution > 0 && resolution < 2048)
@@ -288,7 +292,7 @@ int main() {
         ImGui::SFML::Render(window);
         window.display();
     }
-    
+
     NFD_Quit();
     ImGui::SFML::Shutdown();
     return 0;
