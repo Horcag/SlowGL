@@ -63,10 +63,10 @@ void draw_line(sgl::SFMLImage&image, const LineMethodOptions&opts, const sf::Vec
             sgl::render::draw_dotted_line_loop_fix2(image, start, end, color);
             break;
         case 5:
-            sgl::render::draw_x_loop_dotted_line_no_y(image, start, end, color);
+            sgl::render::draw_x_loop_dotted_line_v2(image, start, end, color);
             break;
         case 6:
-            sgl::render::draw_x_loop_dotted_line_no_y_v2(image, start, end, color);
+            sgl::render::draw_x_loop_dotted_line_no_y(image, start, end, color);
             break;
         case 7:
             sgl::render::draw_x_loop_dotted_line_no_y_v2(image, start, end, color);

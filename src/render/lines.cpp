@@ -1,3 +1,5 @@
+#include <deque>
+
 #include "../Image/SFMLImage.h"
 #include "cmath"
 
@@ -32,27 +34,137 @@ namespace sgl::render {
         }
     }
 
-    void draw_dotted_line_fix2(sgl::SFMLImage&image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
-    }
-
-    void draw_dotted_line_loop_v1(sgl::SFMLImage&image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
+    void draw_dotted_line_loop_v1(sgl::SFMLImage&image, const sf::Vector2i start, const sf::Vector2i end,
+                                  const sf::Color color) {
+        for (int x = start.x; x < end.x; ++x) {
+            const double t = (x - start.x) / static_cast<double>(end.x - start.x);
+            const sf::Vector2u a = {static_cast<unsigned>(x), linear_interpolation(start.y, end.y, t)};
+            image.setPixel(a, color);
+        }
     }
 
     void draw_dotted_line_loop_fix1(sgl::SFMLImage&image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
+        if (start.x > end.x) {
+            std::swap(start.x, end.x);
+            std::swap(start.y, end.y);
+        }
+        for (int x = start.x; x < end.x; ++x) {
+            const double t = (x - start.x) / static_cast<double>(end.x - start.x);
+            const sf::Vector2u a = {static_cast<unsigned>(x), linear_interpolation(start.y, end.y, t)};
+            image.setPixel(a, color);
+        }
     }
 
     void draw_dotted_line_loop_fix2(sgl::SFMLImage&image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
+        bool xChange = false;
+        if (std::abs(start.x - end.x) < std::abs(start.y - end.y)) {
+            std::swap(start.x, start.y);
+            std::swap(end.x, end.y);
+            xChange = true;
+        }
+        for (int x = start.x; x < end.x; ++x) {
+            const double t = (x - start.x) / static_cast<double>(end.x - start.x);
+            const sf::Vector2u a = {static_cast<unsigned>(x), linear_interpolation(start.y, end.y, t)};
+            xChange ? image.setPixel({a.y, a.x}, color) : image.setPixel(a, color);
+        }
     }
 
     void draw_x_loop_dotted_line_v2(sgl::SFMLImage&image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
+        bool xChange = false;
+        if (std::abs(start.x - end.x) < std::abs(start.y - end.y)) {
+            std::swap(start.x, start.y);
+            std::swap(end.x, end.y);
+            xChange = true;
+        }
+        if (start.x > end.x) {
+            std::swap(start.x, end.x);
+            std::swap(start.y, end.y);
+        }
+        for (int x = start.x; x < end.x; ++x) {
+            const double t = (x - start.x) / static_cast<double>(end.x - start.x);
+            const sf::Vector2u a = {static_cast<unsigned>(x), linear_interpolation(start.y, end.y, t)};
+            xChange ? image.setPixel({a.y, a.x}, color) : image.setPixel(a, color);
+        }
     }
 
     void draw_x_loop_dotted_line_no_y(sgl::SFMLImage&image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
+        bool xChange = false;
+        if (std::abs(start.x - end.x) < std::abs(start.y - end.y)) {
+            std::swap(start.x, start.y);
+            std::swap(end.x, end.y);
+            xChange = true;
+        }
+        if (start.x > end.x) {
+            std::swap(start.x, end.x);
+            std::swap(start.y, end.y);
+        }
+        int y = start.y;
+        double dy = std::abs(end.y - start.y) / static_cast<double>(end.x - start.x);
+        double d_error = 0.0;
+        const int y_update = end.y > start.y ? 1 : -1;
+        for (int x = start.x; x < end.x; ++x) {
+            xChange
+                ? image.setPixel({static_cast<unsigned>(y), static_cast<unsigned>(x)}, color)
+                : image.setPixel({static_cast<unsigned>(x), static_cast<unsigned>(y)}, color);
+            d_error += dy;
+            if (d_error > 0.5) {
+                d_error -= 1.0;
+                y += y_update;
+            }
+        }
     }
 
     void draw_x_loop_dotted_line_no_y_v2(sgl::SFMLImage&image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
+        bool xChange = false;
+        if (std::abs(start.x - end.x) < std::abs(start.y - end.y)) {
+            std::swap(start.x, start.y);
+            std::swap(end.x, end.y);
+            xChange = true;
+        }
+        if (start.x > end.x) {
+            std::swap(start.x, end.x);
+            std::swap(start.y, end.y);
+        }
+        int y = start.y;
+        double dy = 2 * (end.x - start.x) * std::abs(end.y - start.y) / static_cast<double>(end.x - start.x);
+        double d_error = 0;
+        const int y_update = end.y > start.y ? 1 : -1;
+        for (int x = start.x; x < end.x; ++x) {
+            xChange
+                ? image.setPixel({static_cast<unsigned>(y), static_cast<unsigned>(x)}, color)
+                : image.setPixel({static_cast<unsigned>(x), static_cast<unsigned>(y)}, color);
+            d_error += dy;
+            if (d_error > 2 * (end.x - start.x) * 0.5) {
+                d_error -= 2 * (end.x - start.x);
+                y += y_update;
+            }
+        }
     }
 
     void draw_bresenham(sgl::SFMLImage&image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
+        bool xChange = false;
+        if (std::abs(start.x - end.x) < std::abs(start.y - end.y)) {
+            std::swap(start.x, start.y);
+            std::swap(end.x, end.y);
+            xChange = true;
+        }
+        if (start.x > end.x) {
+            std::swap(start.x, end.x);
+            std::swap(start.y, end.y);
+        }
+        int y = start.y;
+        int dy = 2 * std::abs(end.y - start.y);
+        int d_error = 0;
+        const int y_update = end.y > start.y ? 1 : -1;
+        for (int x = start.x; x < end.x; ++x) {
+            xChange
+                ? image.setPixel({static_cast<unsigned>(y), static_cast<unsigned>(x)}, color)
+                : image.setPixel({static_cast<unsigned>(x), static_cast<unsigned>(y)}, color);
+            d_error += dy;
+            if (d_error > end.x - start.x) {
+                d_error -= 2 * (end.x - start.x);
+                y += y_update;
+            }
+        }
     }
 }
