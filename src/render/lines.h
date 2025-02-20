@@ -4,7 +4,7 @@
 #include "../Image/SFMLImage.h"
 
 namespace sgl::render {
-    void draw_dotted_line(sgl::SFMLImage&image, sf::Vector2u, sf::Vector2u, sf::Color, int count);
+    void draw_dotted_line(sgl::SFMLImage&image, sf::Vector2u, sf::Vector2u, sf::Color, unsigned int count);
 
     void draw_dotted_line_fix1(sgl::SFMLImage&image, sf::Vector2u, sf::Vector2u, sf::Color);
 
