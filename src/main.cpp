@@ -9,8 +9,8 @@
 #include "Inter-VariableFont.h"
 #include <string>
 #include <nfd.hpp>
-#define USE_MATH_DEFINES
-#include <cmath>
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 void draw(sgl::SFMLImage&image, int64_t time) {
     image.clear();
