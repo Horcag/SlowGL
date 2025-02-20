@@ -42,12 +42,16 @@ std::vector<sf::Vector3f>::const_iterator Model3D::endVertices() const
     return vertex.end();
 }
 
-std::array<sf::Vector3f, 3> Model3D::get_vertexes(int index) const {
+std::array<sf::Vector3f, 3> Model3D::get_tri(int index) const {
     const auto f = faces[index];
     std::array<sf::Vector3f, 3> res;
     res[0] = vertex[f.vertexIndices[0] - 1];
     res[1] = vertex[f.vertexIndices[1] - 1];
     res[2] = vertex[f.vertexIndices[2] - 1];
     return res;
+}
+
+size_t Model3D::get_num_faces() const {
+    return faces.size();
 }
 
