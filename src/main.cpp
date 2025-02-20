@@ -110,12 +110,16 @@ void SetOptimalFontSize(const ImGuiIO&io, const sf::VideoMode&desktop) {
                                        static_cast<float>(desktop.size.y) / 1080.0f);
     const float fontSize = baseFontSize * scaleFactor;
 
+    ImFontConfig font_cfg{};
+    font_cfg.FontDataOwnedByAtlas = false;
+
     // Загрузка шрифта с новым размером
     io.Fonts->Clear();
     ImFont* font = io.Fonts->AddFontFromMemoryTTF(
         Inter_VariableFont_opsz_wght_ttf,
         Inter_VariableFont_opsz_wght_ttf_len,
-        fontSize);
+        fontSize,
+        &font_cfg);
     if (font == nullptr) {
         printf("Failed to load font!\n");
         return;
