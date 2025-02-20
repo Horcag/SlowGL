@@ -221,7 +221,7 @@ int main() {
         if (ImGui::Button("+")) debugView.Zoom(0.5f);
         ImGui::SeparatorText("Render");
         if (ImGui::DragInt("Resolution", &resolution, 1.f, 16, 512)) {
-            if (resolution > 0 && resolution < 2048){
+            if (resolution > 0 && resolution <= 4096){
                 image.resize(sf::Vector2u(resolution, resolution));
                 calc_model_scale(current_model, model_center, model_scale, resolution);
             }
@@ -291,8 +291,7 @@ int main() {
                 image.clear();
                 for(auto& vtx = current_model.beginVertices();current_model.endVertices() != vtx; vtx++){
                     sf::Vector3f transformed = (*vtx - model_center) * model_scale;
-                    //printf("%f %f %f\n", transformed.x, transformed.y, transformed.z);
-                    image.setPixel(sf::Vector2u(transformed.x + resolution/2, transformed.z + resolution/2), sf::Color::Green);
+                    image.setPixel(sf::Vector2u(transformed.x + resolution/2, transformed.z + resolution/2), sf::Color::Magenta);
                 }
                 image.update();
 
@@ -300,7 +299,25 @@ int main() {
             }
             case 4: {
                 //5. Работа с трёхмерной моделью (полигоны)
-                model_selector(current_model);
+                line_method_combo(lineOptions);
+
+                if(model_selector(current_model)){
+                    calc_model_scale(current_model, model_center, model_scale, resolution);
+                }
+                
+                sf::Vector3f resol(resolution/2, resolution/2, resolution/2);
+                image.clear();
+                for(int i = 0; i < current_model.get_num_faces(); i++){
+                    auto tri = current_model.get_tri(i);
+                    sf::Vector3f v1_tr = (tri[0] - model_center) * model_scale + resol;
+                    sf::Vector3f v2_tr = (tri[1] - model_center) * model_scale + resol;
+                    sf::Vector3f v3_tr = (tri[2] - model_center) * model_scale + resol;
+
+                    draw_line(image, lineOptions, sf::Vector2i(v1_tr.x, v1_tr.y), sf::Vector2i(v2_tr.x, v2_tr.y), sf::Color::Green);
+                    draw_line(image, lineOptions, sf::Vector2i(v2_tr.x, v2_tr.y), sf::Vector2i(v3_tr.x, v3_tr.y), sf::Color::Green);
+                    draw_line(image, lineOptions, sf::Vector2i(v1_tr.x, v1_tr.y), sf::Vector2i(v3_tr.x, v3_tr.y), sf::Color::Green);
+                }
+                image.update();
                 break;
             }
             case 5: //6. Отрисовка рёбер трёхмерной модели
