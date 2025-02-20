@@ -9,6 +9,8 @@
 #include "Inter-VariableFont.h"
 #include <string>
 #include <nfd.hpp>
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 void draw(sgl::SFMLImage&image, int64_t time) {
     image.clear();
@@ -42,13 +44,28 @@ void line_method_combo(LineMethodOptions&options) {
     }
 }
 
-void draw_line_method(const LineMethodOptions& opts, sf::Vector2u start, sf::Vector2u end){
+void draw_line(sgl::SFMLImage& image, const LineMethodOptions& opts, sf::Vector2u start, sf::Vector2u end, sf::Color color){
     switch (opts.current_method)
     {
     case 0:
-        /* code */
+        sgl::render::draw_dotted_line(image, start, end, color, opts.dotted_line_dots);
         break;
-    
+    case 1:
+        sgl::render::draw_dotted_line_fix1(image, start, end, color);
+    case 2:
+        sgl::render::draw_dotted_line_loop_v1(image, start, end, color);
+    case 3:
+        sgl::render::draw_dotted_line_loop_fix1(image, start, end, color);
+    case 4:
+        sgl::render::draw_dotted_line_loop_fix2(image, start, end, color);
+    case 5:
+        sgl::render::draw_x_loop_dotted_line_no_y(image, start, end, color);
+    case 6:
+        sgl::render::draw_x_loop_dotted_line_no_y_v2(image, start, end, color);
+    case 7:
+        sgl::render::draw_x_loop_dotted_line_no_y_v2(image, start, end, color);
+    case 8:
+        sgl::render::draw_brezenham(image, start, end, color);
     default:
         break;
     }
@@ -140,6 +157,7 @@ int main() {
                 debugView.ProcessEvent(event.value());
             }
         }
+        if(!window.isOpen()) break;
 
 
         const sf::Time dt = deltaClock.restart();
@@ -198,6 +216,15 @@ int main() {
             case 1: {
                 //2. Отрисовка прямых линий
                 line_method_combo(lineOptions);
+
+                image.clear();
+                sf::Vector2f center(resolution/2, resolution/2);
+                for(int i = 0; i < 13; i++){
+                    double ang = ((double)i / 6.) * M_PI;
+                    sf::Vector2f offset = sf::Vector2f(cos(ang), sin(ang))*(float)resolution*0.95f;
+                    draw_line(image, lineOptions, sf::Vector2u(center), sf::Vector2u(center + offset), sf::Color::White);
+                }
+
                 break;
             }
             case 2: {
