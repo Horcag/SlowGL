@@ -7,6 +7,9 @@
 #include "Image/SFMLImage.h"
 #include "Debug/DebugView.h"
 #include "Inter-VariableFont.h"
+#include "Parsers/OBJParser/Model3D.h"
+#include "Parsers/OBJParser/OBJParser.h"
+#include <fstream>
 #include <string>
 #include <nfd.hpp>
 #define _USE_MATH_DEFINES
@@ -98,6 +101,35 @@ bool model_select(char* filename) {
     return false;
 }
 
+bool model_selector(Model3D& model){
+    static OBJParser parser;
+    static char filename[255]{};
+    if(model_select(filename)){
+        std::ifstream ifs(filename);
+        model = parser.parse(ifs);
+        printf("%d\n", model.get_vertex().size());
+        ifs.close();
+        return true;
+    }
+    return false;
+}
+
+void calc_model_scale(const Model3D& model, sf::Vector3f& center, float& factor, int resolution){
+    sf::Vector3f mins{-FLT_MAX, -FLT_MAX, -FLT_MAX};
+    sf::Vector3f maxs{FLT_MAX, FLT_MAX, FLT_MAX};
+    for(auto& vtx = model.beginVertices(); vtx != model.endVertices(); vtx++){
+        mins.x = std::max(mins.x, vtx->x);
+        mins.y = std::max(mins.y, vtx->y);
+        mins.z = std::max(mins.z, vtx->z);
+        maxs.x = std::min(maxs.x, vtx->x);
+        maxs.y = std::min(maxs.y, vtx->y);
+        maxs.z = std::min(maxs.z, vtx->z);
+    }
+    center = (mins + maxs) / 2.f;
+    sf::Vector3f sz = (maxs - mins) / 2.f;
+    factor = (float)resolution / std::max(std::max(std::abs(sz.x), std::abs(sz.y)), std::abs(sz.z)) / 2.f * 0.7f;
+}
+
 const char* previews[] = {
     "1. Image manipulation", "2. Straight lines", "3. 3D Model", "4. 3D Model vertices", "5. 3D Model (Polygons)",
     "6. 3D Model edges"
@@ -143,9 +175,10 @@ int main() {
         return -1;
     }
 
-    static char model_path[255]{};
     LineMethodOptions lineOptions;
-
+    Model3D current_model;
+    sf::Vector3f model_center{};
+    float model_scale = 0;
 
     ImGuiIO&io = ImGui::GetIO();
     SetOptimalFontSize(io, desktop);
@@ -183,13 +216,15 @@ int main() {
         ImGui::SeparatorText("View");
         if (ImGui::Button("Reset view")) debugView.ResetView();
         ImGui::SameLine();
-        if (ImGui::Button("+")) debugView.Zoom(1.05f);
+        if (ImGui::Button("-")) debugView.Zoom(1.5f);
         ImGui::SameLine();
-        if (ImGui::Button("-")) debugView.Zoom(0.95f);
+        if (ImGui::Button("+")) debugView.Zoom(0.5f);
         ImGui::SeparatorText("Render");
         if (ImGui::DragInt("Resolution", &resolution, 1.f, 16, 512)) {
-            if (resolution > 0 && resolution < 2048)
+            if (resolution > 0 && resolution < 2048){
                 image.resize(sf::Vector2u(resolution, resolution));
+                calc_model_scale(current_model, model_center, model_scale, resolution);
+            }
         }
 
         ImGui::SeparatorText("Lab 1");
@@ -249,11 +284,23 @@ int main() {
             }
             case 3: {
                 //4. Отрисовка вершин трёхмерной модели
+                if(model_selector(current_model)){
+                    calc_model_scale(current_model, model_center, model_scale, resolution);
+                }
+
+                image.clear();
+                for(auto& vtx = current_model.beginVertices();current_model.endVertices() != vtx; vtx++){
+                    sf::Vector3f transformed = (*vtx - model_center) * model_scale;
+                    //printf("%f %f %f\n", transformed.x, transformed.y, transformed.z);
+                    image.setPixel(sf::Vector2u(transformed.x + resolution/2, transformed.z + resolution/2), sf::Color::Green);
+                }
+                image.update();
+
                 break;
             }
             case 4: {
                 //5. Работа с трёхмерной моделью (полигоны)
-                model_select(model_path);
+                model_selector(current_model);
                 break;
             }
             case 5: //6. Отрисовка рёбер трёхмерной модели

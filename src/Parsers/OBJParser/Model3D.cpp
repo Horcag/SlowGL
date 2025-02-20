@@ -31,3 +31,14 @@ void Model3D::set_vertex_normal(const std::vector<sf::Vector3f>& vertex_normal) 
 void Model3D::set_faces(const std::vector<Face>& faces) {
     this->faces  = faces;
 }
+
+std::vector<sf::Vector3f>::const_iterator Model3D::beginVertices() const
+{
+    return vertex.begin();
+}
+
+std::vector<sf::Vector3f>::const_iterator Model3D::endVertices() const
+{
+    return vertex.end();
+}
+

@@ -35,6 +35,9 @@ public:
     void set_vertex_texture(const std::vector<sf::Vector2f>& newBufferVT);
     void set_vertex_normal(const std::vector<sf::Vector3f>& newBufferVN);
     void set_faces(const std::vector<Face>& newBufferF);
+
+    std::vector<sf::Vector3f>::const_iterator beginVertices() const;
+    std::vector<sf::Vector3f>::const_iterator endVertices() const;
 };
 
 
