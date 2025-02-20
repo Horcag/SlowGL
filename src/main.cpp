@@ -44,7 +44,7 @@ void line_method_combo(LineMethodOptions&options) {
     }
 }
 
-void draw_line(sgl::SFMLImage&image, const LineMethodOptions&opts, const sf::Vector2u start, const sf::Vector2u end,
+void draw_line(sgl::SFMLImage&image, const LineMethodOptions&opts, const sf::Vector2i start, const sf::Vector2i end,
                sf::Color color) {
     switch (opts.current_method) {
         case 0:
@@ -238,7 +238,7 @@ int main() {
                     double ang = (static_cast<double>(i) / 13. * 2.) * M_PI;
                     const sf::Vector2f offset = sf::Vector2f(cos(ang), sin(ang)) * static_cast<float>(resolution) *
                                                 0.45f;
-                    draw_line(image, lineOptions, sf::Vector2u(center), sf::Vector2u(center + offset),
+                    draw_line(image, lineOptions, sf::Vector2i(center), sf::Vector2i(center + offset),
                               sf::Color::White);
                 }
                 image.update();
