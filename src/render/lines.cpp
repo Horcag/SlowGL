@@ -1,12 +1,6 @@
 #include "../Image/SFMLImage.h"
 #include "cmath"
 namespace sgl::render {
-    void draw_x_loop_dotted_line_no_y(sgl::SFMLImage& image, sf::Vector2u start, sf::Vector2u end, sf::Color color) {
-
-    }
-    void draw_x_loop_dotted_line_no_y_v2(sgl::SFMLImage& image, sf::Vector2u, sf::Vector2u, sf::Color) {
-
-    }
     void draw_brezenham(sgl::SFMLImage& image, sf::Vector2u, sf::Vector2u, sf::Color) {
     }
 
