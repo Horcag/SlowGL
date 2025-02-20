@@ -33,7 +33,6 @@ namespace sgl::render {
     }
 
     void draw_dotted_line_fix2(sgl::SFMLImage&image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
-
     }
 
     void draw_dotted_line_loop_v1(sgl::SFMLImage&image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
