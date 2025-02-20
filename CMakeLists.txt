@@ -61,32 +61,38 @@ FetchContent_MakeAvailable(googletest)
 add_executable(${PROJECT_NAME} src/main.cpp ${sources})
 
 # Add examples
-option(SLOWGL_BUILD_EXAMPLES "Build SlowGL examples" OFF)
-if(SLOWGL_BUILD_EXAMPLES)
-        add_subdirectory(examples)
-endif()
+option(SLOWGL_BUILD_EXAMPLES "Build SlowGL examples" ON)
+if (SLOWGL_BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif ()
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics ImGui-SFML::ImGui-SFML nfd)
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 
+# Копируем шрифты в выходную директорию
+file(COPY ${CMAKE_SOURCE_DIR}/fonts DESTINATION ${CMAKE_BINARY_DIR}/bin)
+
+# Add include directories
+include_directories(${CMAKE_SOURCE_DIR}/fonts/Inter)
+
 # Add tests
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-        enable_testing()
+if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    enable_testing()
 
-        # Add test executable
-        add_executable(OBJParserTests
-                tests/OBJParser_test.cpp
-                ${sources}
-        )
+    # Add test executable
+    add_executable(OBJParserTests
+            tests/OBJParser_test.cpp
+            ${sources}
+    )
 
-        target_include_directories(OBJParserTests PUBLIC ${CMAKE_SOURCE_DIR}/src)
+    target_include_directories(OBJParserTests PUBLIC ${CMAKE_SOURCE_DIR}/src)
 
-        # Link Google Test
-        target_link_libraries(OBJParserTests PRIVATE gtest_main sfml-graphics ImGui-SFML::ImGui-SFML)
-        target_compile_features(OBJParserTests PRIVATE cxx_std_17)
+    # Link Google Test
+    target_link_libraries(OBJParserTests PRIVATE gtest_main sfml-graphics ImGui-SFML::ImGui-SFML)
+    target_compile_features(OBJParserTests PRIVATE cxx_std_17)
 
-        # Add tests to CMake testing
-        include(GoogleTest)
-        gtest_discover_tests(OBJParserTests)
-endif()
+    # Add tests to CMake testing
+    include(GoogleTest)
+    gtest_discover_tests(OBJParserTests)
+endif ()

@@ -6,14 +6,15 @@
 
 #include "Image/SFMLImage.h"
 #include "Debug/DebugView.h"
-
+#include "Inter-VariableFont.h"
+#include <string>
 #include <nfd.hpp>
 
-void draw(sgl::SFMLImage& image, int64_t time){
+void draw(sgl::SFMLImage&image, int64_t time) {
     image.clear();
-    for(unsigned int i = 0; i < image.getSize().x; i++) {
-        for(unsigned int j = 0; j < image.getSize().y; j++) {
-            if((i+time) % (j+1) == 0) image.setPixel({i,j}, sf::Color::Blue);
+    for (unsigned int i = 0; i < image.getSize().x; i++) {
+        for (unsigned int j = 0; j < image.getSize().y; j++) {
+            if ((i + time) % (j + 1) == 0) image.setPixel({i, j}, sf::Color::Blue);
         }
     }
     image.update();
@@ -23,52 +24,83 @@ struct LineMethodOptions {
     int dotted_line_dots = 100;
 };
 
-int line_method_combo(LineMethodOptions& options){
-    static const char* methods[] = { "dotted_line", "dotted_line_v2", "x_loop_line", "x_loop_line_hotfix_1", "x_loop_line_hotfix_2", "x_loop_line_v2", "x_loop_line_v2_no_y_calc", "x_loop_line_v2_no_y_calc_for_some_unknown_reason", "bresenham line" };
+int line_method_combo(LineMethodOptions&options) {
+    static const char* methods[] = {
+        "dotted_line", "dotted_line_v2", "x_loop_line", "x_loop_line_hotfix_1", "x_loop_line_hotfix_2",
+        "x_loop_line_v2", "x_loop_line_v2_no_y_calc", "x_loop_line_v2_no_y_calc_for_some_unknown_reason",
+        "bresenham line"
+    };
     static int current_method = 0;
 
     ImGui::Combo("Line method", &current_method, methods, IM_ARRAYSIZE(methods));
 
-    if(current_method == 0){
-        if(ImGui::DragInt("Dots", &options.dotted_line_dots, 1.f, 16, 512))
-            if(options.dotted_line_dots <= 0 || options.dotted_line_dots >= 2048)
+    if (current_method == 0) {
+        if (ImGui::DragInt("Dots", &options.dotted_line_dots, 1.f, 16, 512))
+            if (options.dotted_line_dots <= 0 || options.dotted_line_dots >= 2048)
                 options.dotted_line_dots = 100;
     }
 
     return current_method;
 }
 
-bool model_select(char* filename){
+bool model_select(char* filename) {
     ImGui::InputText("3D model", filename, 255, ImGuiInputTextFlags_CharsNoBlank);
-    if(ImGui::Button("Select file")){
+    if (ImGui::Button("Select file")) {
         NFD::UniquePath outPath;
         nfdfilteritem_t filterItem[1] = {{"3D model", "obj"}};
 
         nfdresult_t save_result = NFD::OpenDialog(outPath, filterItem, 1);
 
-        if(save_result == NFD_OKAY){
-            std::strncpy(filename, outPath.get(), 255);
+        if (save_result == NFD_OKAY) {
+            strncpy(filename, outPath.get(), 255);
             return true;
         }
     }
-    
+
     ImGui::SameLine();
 
-    if(ImGui::Button("Open")) return true;
+    if (ImGui::Button("Open")) return true;
 
     return false;
 }
 
-const char* previews[] = { "1. Image manipulation", "2. Straight lines", "3. 3D Model", "4. 3D Model vertices", "5. 3D Model (Polygons)", "6. 3D Model edges" };
+const char* previews[] = {
+    "1. Image manipulation", "2. Straight lines", "3. 3D Model", "4. 3D Model vertices", "5. 3D Model (Polygons)",
+    "6. 3D Model edges"
+};
 
-int main()
-{
+// Функция для установки оптимального размера шрифта
+void SetOptimalFontSize(ImGuiIO&io, const sf::VideoMode&desktop) {
+    constexpr float baseFontSize = 18.0f; // Базовый размер шрифта
+    const float scaleFactor = std::min(static_cast<float>(desktop.size.x) / 1920.0f,
+                                       static_cast<float>(desktop.size.y) / 1080.0f);
+    const float fontSize = baseFontSize * scaleFactor;
+
+    // Загрузка шрифта с новым размером
+    io.Fonts->Clear();
+    ImFont* font = io.Fonts->AddFontFromMemoryTTF(
+        Inter_VariableFont_opsz_wght_ttf,
+        Inter_VariableFont_opsz_wght_ttf_len,
+        fontSize);
+    if (font == nullptr) {
+        printf("Failed to load font!\n");
+        return;
+    }
+    io.Fonts->Build();
+    if (!ImGui::SFML::UpdateFontTexture()) {
+        printf("Failed to update font texture!\n");
+        return;
+    }
+}
+
+int main() {
     NFD::Guard nfdGuard;
 
     sf::Vector2u windowSize{1280, 640};
     sf::RenderWindow window(sf::VideoMode(windowSize), "Lab 1");
+    sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
     window.setFramerateLimit(60);
-    if (!ImGui::SFML::Init(window)){
+    if (!ImGui::SFML::Init(window)) {
         printf("Imgui SFML startup failed\n");
         return -1;
     }
@@ -77,6 +109,9 @@ int main()
     LineMethodOptions lineOptions;
 
 
+    ImGuiIO&io = ImGui::GetIO();
+    SetOptimalFontSize(io, desktop);
+
     int resolution = 16;
     sgl::SFMLImage image(sf::Vector2u(resolution, resolution), sf::Color::Black);
     sgl::DebugView debugView(sf::Vector2f(windowSize), 0.05f);
@@ -84,19 +119,19 @@ int main()
     sf::Clock deltaClock;
     //sf::Clock perfClock;
     //sf::Time perfTime;
-    while (window.isOpen())
-    {
-        while (const auto event = window.pollEvent())
-        {
+    while (window.isOpen()) {
+        while (const auto event = window.pollEvent()) {
             ImGui::SFML::ProcessEvent(window, *event);
 
             if (event->is<sf::Event::Closed>())
                 window.close();
             else if (const auto* resized = event->getIf<sf::Event::Resized>())
                 windowSize = resized->size;
-
-            if(!ImGui::GetIO().WantCaptureMouse && event.has_value()) debugView.ProcessEvent(event.value());
+            if (!ImGui::GetIO().WantCaptureMouse && event.has_value()) {
+                debugView.ProcessEvent(event.value());
+            }
         }
+
 
         const sf::Time dt = deltaClock.restart();
         ImGui::SFML::Update(window, dt);
@@ -104,14 +139,14 @@ int main()
         ImGui::ShowDemoWindow();
 
         ImGui::Begin("Lab 1!");
-        ImGui::Text("FPS: %.1f", 1.0f/dt.asSeconds());
+        ImGui::Text("FPS: %.1f", 1.0f / dt.asSeconds());
         //ImGui::Text("Render time: %lluus", perfTime.asMicroseconds());
-        
+
         ImGui::SeparatorText("View");
-        if(ImGui::Button("Reset view")) debugView.ResetView();
+        if (ImGui::Button("Reset view")) debugView.ResetView();
         ImGui::SeparatorText("Render");
-        if(ImGui::DragInt("Resoultion", &resolution, 1.f, 16, 512)) {
-            if(resolution > 0 && resolution < 2048)
+        if (ImGui::DragInt("Resoultion", &resolution, 1.f, 16, 512)) {
+            if (resolution > 0 && resolution < 2048)
                 image.resize(sf::Vector2u(resolution, resolution));
         }
 
@@ -124,48 +159,54 @@ int main()
         ImGui::Separator();
         ImGui::Spacing();
 
-        switch (current_preview)
-        {
-        case 0: //1. Работа с изображениями.
-        {
-            static int rgb[3] = { 0, 0, 0 };
-            for (int i = 0; i < 3; i++)
-            {
-                //if (i > 0) ImGui::SameLine();
-                ImGui::PushID(i);
-                ImGui::PushStyleColor(ImGuiCol_FrameBg, (ImVec4)ImColor::HSV(i / 3.0f, 0.5f, 0.5f));
-                ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, (ImVec4)ImColor::HSV(i / 3.0f, 0.6f, 0.5f));
-                ImGui::PushStyleColor(ImGuiCol_FrameBgActive, (ImVec4)ImColor::HSV(i / 3.0f, 0.7f, 0.5f));
-                ImGui::PushStyleColor(ImGuiCol_SliderGrab, (ImVec4)ImColor::HSV(i / 3.0f, 0.9f, 0.9f));
-                ImGui::SliderInt("R\0G\0B\0" + i*2, &rgb[i], 0, 255);
-                ImGui::PopStyleColor(4);
-                ImGui::PopID();
+        switch (current_preview) {
+            case 0: {
+                //1. Работа с изображениями.
+
+                static int rgb[3] = {0, 0, 0};
+
+                for (int i = 0; i < 3; i++) {
+                    //if (i > 0) ImGui::SameLine();
+                    ImGui::PushID(i);
+                    ImGui::PushStyleColor(ImGuiCol_FrameBg, static_cast<ImVec4>(ImColor::HSV(i / 3.0f, 0.5f, 0.5f)));
+                    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered,
+                                          static_cast<ImVec4>(ImColor::HSV(i / 3.0f, 0.6f, 0.5f)));
+                    ImGui::PushStyleColor(ImGuiCol_FrameBgActive,
+                                          static_cast<ImVec4>(ImColor::HSV(i / 3.0f, 0.7f, 0.5f)));
+                    ImGui::PushStyleColor(ImGuiCol_SliderGrab, static_cast<ImVec4>(ImColor::HSV(i / 3.0f, 0.9f, 0.9f)));
+
+                    const char* labels[] = {"R", "G", "B"};
+                    ImGui::SliderInt(labels[i], &rgb[i], 0, 255);
+
+                    ImGui::PopStyleColor(4);
+                    ImGui::PopID();
+                }
+
+                image.clear(sf::Color(rgb[0], rgb[1], rgb[2]));
+                image.update();
             }
-
-            image.clear(sf::Color(rgb[0], rgb[1], rgb[2]));
-            image.update();
-        }
-        break;
-        case 1: //2. Отрисовка прямых линий 
-        {
-            line_method_combo(lineOptions);
-        }
-        break;
-        case 2: //3. Работа с трёхмерной моделью (вершины) 
-        
-        break;
-
-        case 3: //4. Отрисовка вершин трёхмерной модели 
-
-        break;
-        case 4: //5. Работа с трёхмерной моделью (полигоны)
-            model_select(model_path);
-        break;
-        case 5: //6. Отрисовка рёбер трёхмерной модели
-
-        break;
-        default:
             break;
+            case 1: {
+                //2. Отрисовка прямых линий
+
+                line_method_combo(lineOptions);
+                break;
+            }
+            case 2: {
+                //3. Работа с трёхмерной моделью (вершины)
+            }
+            case 3: {
+                //4. Отрисовка вершин трёхмерной модели
+                break;
+            }
+            case 4: {
+                //5. Работа с трёхмерной моделью (полигоны)
+                model_select(model_path);
+                break;
+            }
+            case 5: //6. Отрисовка рёбер трёхмерной модели
+            default:
+                break;
         }
 
         ImGui::Spacing();
@@ -174,19 +215,19 @@ int main()
 
         static char filename[255]{};
         ImGui::InputText("File", filename, 255, ImGuiInputTextFlags_CharsNoBlank);
-        if(ImGui::Button("Save As")){
+        if (ImGui::Button("Save As")) {
             NFD::UniquePath outPath;
             nfdfilteritem_t filterItem[1] = {{"Image/png", "png"}};
 
             nfdresult_t save_result = NFD::SaveDialog(outPath, filterItem, 1, NULL, "test.png");
 
-            if(save_result == NFD_OKAY){
-                std::strncpy(filename, outPath.get(), 255);
+            if (save_result == NFD_OKAY) {
+                strncpy(filename, outPath.get(), 255);
                 image.saveToFile(std::string(filename));
             }
         }
         ImGui::SameLine();
-        if(ImGui::Button("Save")){
+        if (ImGui::Button("Save")) {
             image.saveToFile(std::string(filename) + ".png");
         }
 
