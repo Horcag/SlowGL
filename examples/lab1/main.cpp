@@ -8,7 +8,7 @@
 #include "Inter-VariableFont.h"
 
 // Функция для установки оптимального размера шрифта
-void SetOptimalFontSize(ImGuiIO&io, const sf::VideoMode&desktop) {
+void SetOptimalFontSize(const ImGuiIO&io, const sf::VideoMode&desktop) {
     constexpr float baseFontSize = 18.0f; // Базовый размер шрифта
     const float scaleFactor = std::min(static_cast<float>(desktop.size.x) / 1920.0f,
                                        static_cast<float>(desktop.size.y) / 1080.0f);

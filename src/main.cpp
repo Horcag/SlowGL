@@ -47,11 +47,9 @@ bool model_select(char* filename) {
     ImGui::InputText("3D model", filename, 255, ImGuiInputTextFlags_CharsNoBlank);
     if (ImGui::Button("Select file")) {
         NFD::UniquePath outPath;
-        nfdfilteritem_t filterItem[1] = {{"3D model", "obj"}};
+        constexpr nfdfilteritem_t filterItem[1] = {{"3D model", "obj"}};
 
-        nfdresult_t save_result = NFD::OpenDialog(outPath, filterItem, 1);
-
-        if (save_result == NFD_OKAY) {
+        if (const nfdresult_t save_result = NFD::OpenDialog(outPath, filterItem, 1); save_result == NFD_OKAY) {
             strncpy(filename, outPath.get(), 255);
             return true;
         }
@@ -70,7 +68,7 @@ const char* previews[] = {
 };
 
 // Функция для установки оптимального размера шрифта
-void SetOptimalFontSize(ImGuiIO&io, const sf::VideoMode&desktop) {
+void SetOptimalFontSize(const ImGuiIO&io, const sf::VideoMode&desktop) {
     constexpr float baseFontSize = 18.0f; // Базовый размер шрифта
     const float scaleFactor = std::min(static_cast<float>(desktop.size.x) / 1920.0f,
                                        static_cast<float>(desktop.size.y) / 1080.0f);
@@ -145,7 +143,7 @@ int main() {
         ImGui::SeparatorText("View");
         if (ImGui::Button("Reset view")) debugView.ResetView();
         ImGui::SeparatorText("Render");
-        if (ImGui::DragInt("Resoultion", &resolution, 1.f, 16, 512)) {
+        if (ImGui::DragInt("Resolution", &resolution, 1.f, 16, 512)) {
             if (resolution > 0 && resolution < 2048)
                 image.resize(sf::Vector2u(resolution, resolution));
         }
@@ -219,7 +217,7 @@ int main() {
             NFD::UniquePath outPath;
             nfdfilteritem_t filterItem[1] = {{"Image/png", "png"}};
 
-            nfdresult_t save_result = NFD::SaveDialog(outPath, filterItem, 1, NULL, "test.png");
+            nfdresult_t save_result = NFD::SaveDialog(outPath, filterItem, 1, nullptr, "test.png");
 
             if (save_result == NFD_OKAY) {
                 strncpy(filename, outPath.get(), 255);
