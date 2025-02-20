@@ -10,7 +10,7 @@
 #include <string>
 #include <nfd.hpp>
 #define _USE_MATH_DEFINES
-#include <cmath>
+#include <math.h>
 
 void draw(sgl::SFMLImage&image, int64_t time) {
     image.clear();
