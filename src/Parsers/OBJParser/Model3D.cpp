@@ -32,26 +32,15 @@ void Model3D::set_faces(const std::vector<Face>&newBufferF) {
     this->faces = newBufferF;
 }
 
-std::vector<sf::Vector3f>::const_iterator Model3D::beginVertices() const
+//const sf::Vector3f &Model3D::PolyIterator::getVertex(int i) const
+
+
+const sf::Vector2f &Model3D::PolyIterator::getUv(int i) const
 {
-    return vertex.begin();
+    return m_model->vertex_texture[(&m_ptr->textureIndices.x)[i]];
 }
 
-std::vector<sf::Vector3f>::const_iterator Model3D::endVertices() const
+const sf::Vector3f &Model3D::PolyIterator::getNormal(int i) const
 {
-    return vertex.end();
+    return m_model->vertex_normal[(&m_ptr->normalIndices.x)[i]];
 }
-
-std::array<sf::Vector3f, 3> Model3D::get_tri(int index) const {
-    const auto f = faces[index];
-    std::array<sf::Vector3f, 3> res;
-    res[0] = vertex[f.vertexIndices[0] - 1];
-    res[1] = vertex[f.vertexIndices[1] - 1];
-    res[2] = vertex[f.vertexIndices[2] - 1];
-    return res;
-}
-
-size_t Model3D::get_num_faces() const {
-    return faces.size();
-}
-

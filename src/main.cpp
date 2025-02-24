@@ -30,25 +30,26 @@ struct LineMethodOptions {
     int current_method = 0;
 };
 
-void line_method_combo(LineMethodOptions&options) {
+bool line_method_combo(LineMethodOptions&options) {
     static const char* methods[] = {
         "dotted_line", "dotted_line_v2", "x_loop_line", "x_loop_line_hotfix_1", "x_loop_line_hotfix_2",
         "x_loop_line_v2", "x_loop_line_v2_no_y_calc", "x_loop_line_v2_no_y_calc_for_some_unknown_reason",
-        "bresenham line"
+        "bresenham line", "EFLA"
     };
 
 
-    ImGui::Combo("Line method", &options.current_method, methods, IM_ARRAYSIZE(methods));
+    bool res = ImGui::Combo("Line method", &options.current_method, methods, IM_ARRAYSIZE(methods));
 
     if (options.current_method == 0) {
         if (ImGui::DragInt("Dots", &options.dotted_line_dots, 1.f, 16, 512))
             if (options.dotted_line_dots <= 0 || options.dotted_line_dots >= 2048)
                 options.dotted_line_dots = 100;
     }
+
+    return res;
 }
 
-void draw_line(sgl::SFMLImage&image, const LineMethodOptions&opts, const sf::Vector2i start, const sf::Vector2i end,
-               sf::Color color) {
+void draw_line(sgl::SFMLImage&image, const LineMethodOptions&opts, const sf::Vector2i& start, const sf::Vector2i& end, sf::Color color) {
     switch (opts.current_method) {
         case 0:
             sgl::render::draw_dotted_line(image, start, end, color, opts.dotted_line_dots);
@@ -76,6 +77,9 @@ void draw_line(sgl::SFMLImage&image, const LineMethodOptions&opts, const sf::Vec
             break;
         case 8:
             sgl::render::draw_bresenham(image, start, end, color);
+            break;
+        case 9:
+            sgl::render::draw_efla(image, start, end, color);
             break;
         default:
             break;
@@ -231,7 +235,9 @@ int main() {
         ImGui::SeparatorText("Lab 1");
 
         static int current_preview = 0;
-        ImGui::Combo("Preview", &current_preview, previews, IM_ARRAYSIZE(previews));
+        if(ImGui::Combo("Preview", &current_preview, previews, IM_ARRAYSIZE(previews)) && current_preview == 4){
+            lineOptions.current_method = 9;
+        };
 
         ImGui::Spacing();
         ImGui::Separator();
@@ -310,11 +316,10 @@ int main() {
 
                 sf::Vector3f resol(resolution / 2, resolution / 2, resolution / 2);
                 image.clear();
-                for (int i = 0; i < current_model.get_num_faces(); i++) {
-                    auto tri = current_model.get_tri(i);
-                    sf::Vector3f v1_tr = (tri[0] - model_center) * model_scale + resol;
-                    sf::Vector3f v2_tr = (tri[1] - model_center) * model_scale + resol;
-                    sf::Vector3f v3_tr = (tri[2] - model_center) * model_scale + resol;
+                for(auto& poly = current_model.beginPolygons(); poly != current_model.endPolygons(); poly++){
+                    sf::Vector3f v1_tr = (poly.getVertex(0) - model_center) * model_scale + resol;
+                    sf::Vector3f v2_tr = (poly.getVertex(1) - model_center) * model_scale + resol;
+                    sf::Vector3f v3_tr = (poly.getVertex(2) - model_center) * model_scale + resol;
 
                     draw_line(image, lineOptions, sf::Vector2i(v1_tr.x, v1_tr.y), sf::Vector2i(v2_tr.x, v2_tr.y),
                               sf::Color::Green);

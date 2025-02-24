@@ -167,4 +167,36 @@ namespace sgl::render {
             }
         }
     }
+
+    //http://www.edepot.com/linea.html
+    void draw_efla(sgl::SFMLImage&image, const sf::Vector2i& start, const sf::Vector2i& end, sf::Color color) 
+    { 
+        bool yLonger=false;
+        int incrementVal;
+
+        int shortLen=end.y-start.y;
+        int longLen=end.x-start.x;
+        if (abs(shortLen)>abs(longLen)) {
+            int swap=shortLen;
+            shortLen=longLen;
+            longLen=swap;
+            yLonger=true;
+        }
+
+        if (longLen<0) incrementVal=-1;
+        else incrementVal=1;
+
+        double divDiff;
+        if (shortLen==0) divDiff=longLen;
+        else divDiff=(double)longLen/(double)shortLen;
+        if (yLonger) {
+            for (int i=0;i!=longLen;i+=incrementVal) {
+                image.setPixel({static_cast<unsigned>(start.x+(int)((double)i/divDiff)), static_cast<unsigned>(start.y+i)}, color);
+            }
+        } else {
+            for (int i=0;i!=longLen;i+=incrementVal) {
+                image.setPixel({static_cast<unsigned>(start.x+i), static_cast<unsigned>(start.y+(int)((double)i/divDiff))}, color);
+            }
+        }
+    } 
 }

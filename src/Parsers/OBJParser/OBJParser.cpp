@@ -81,7 +81,10 @@ std::vector<Face> OBJParser::parse_faces(std::ifstream&file) {
                 lineStream >> faceData;
                 std::replace(faceData.begin(), faceData.end(), '/', ' ');
                 std::istringstream faceDataStream(faceData);
-                faceDataStream >> face.vertexIndices[i] >> face.textureIndices[i] >> face.normalIndices[i];
+                faceDataStream >> (&face.vertexIndices.x)[i] >> (&face.textureIndices.x)[i] >> (&face.normalIndices.x)[i]; //это безопасно честно)
+                (&face.vertexIndices.x)[i]--;
+                (&face.textureIndices.x)[i]--;
+                (&face.normalIndices.x)[i]--;
             }
             result.push_back(face);
         }
@@ -121,7 +124,10 @@ Model3D OBJParser::parse(std::ifstream&file) const {
                 lineStream >> faceData;
                 std::replace(faceData.begin(), faceData.end(), '/', ' ');
                 std::istringstream faceDataStream(faceData);
-                faceDataStream >> face.vertexIndices[i] >> face.textureIndices[i] >> face.normalIndices[i];
+                faceDataStream >> (&face.vertexIndices.x)[i] >> (&face.textureIndices.x)[i] >> (&face.normalIndices.x)[i]; //это безопасно честно)
+                (&face.vertexIndices.x)[i]--;
+                (&face.textureIndices.x)[i]--;
+                (&face.normalIndices.x)[i]--;
             }
             faces.push_back(face);
         }

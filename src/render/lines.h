@@ -21,6 +21,8 @@ namespace sgl::render {
     void draw_x_loop_dotted_line_no_y_v2(sgl::SFMLImage&image, sf::Vector2i, sf::Vector2i, sf::Color);
 
     void draw_bresenham(sgl::SFMLImage&image, sf::Vector2i, sf::Vector2i, sf::Color);
+
+    void draw_efla(sgl::SFMLImage&image, const sf::Vector2i& start, const sf::Vector2i& end, sf::Color color);
 }
 
 #endif //LINES_H
