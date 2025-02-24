@@ -49,7 +49,8 @@ bool line_method_combo(LineMethodOptions&options) {
     return res;
 }
 
-void draw_line(sgl::SFMLImage&image, const LineMethodOptions&opts, const sf::Vector2i& start, const sf::Vector2i& end, sf::Color color) {
+void draw_line(sgl::SFMLImage&image, const LineMethodOptions&opts, const sf::Vector2i&start, const sf::Vector2i&end,
+               sf::Color color) {
     switch (opts.current_method) {
         case 0:
             sgl::render::draw_dotted_line(image, start, end, color, opts.dotted_line_dots);
@@ -118,7 +119,7 @@ bool model_selector(Model3D&model) {
     return false;
 }
 
-void calc_model_scale(const Model3D&model, sf::Vector3f&center, float& factor, int resolution) {
+void calc_model_scale(const Model3D&model, sf::Vector3f&center, float&factor, int resolution) {
     sf::Vector3f mins{-FLT_MAX, -FLT_MAX, -FLT_MAX};
     sf::Vector3f maxs{FLT_MAX, FLT_MAX, FLT_MAX};
     for (auto vtx = model.beginVertices(); vtx != model.endVertices(); ++vtx) {
@@ -235,7 +236,7 @@ int main() {
         ImGui::SeparatorText("Lab 1");
 
         static int current_preview = 0;
-        if(ImGui::Combo("Preview", &current_preview, previews, IM_ARRAYSIZE(previews)) && current_preview == 4){
+        if (ImGui::Combo("Preview", &current_preview, previews, IM_ARRAYSIZE(previews)) && current_preview == 4) {
             lineOptions.current_method = 9;
         };
 
@@ -316,7 +317,8 @@ int main() {
 
                 sf::Vector3f resol(resolution / 2, resolution / 2, resolution / 2);
                 image.clear();
-                for(auto& poly = current_model.beginPolygons(); poly != current_model.endPolygons(); poly++){
+                for (Model3D::PolyIterator poly = current_model.beginPolygons(); poly != current_model.endPolygons();
+                     poly++) {
                     sf::Vector3f v1_tr = (poly.getVertex(0) - model_center) * model_scale + resol;
                     sf::Vector3f v2_tr = (poly.getVertex(1) - model_center) * model_scale + resol;
                     sf::Vector3f v3_tr = (poly.getVertex(2) - model_center) * model_scale + resol;
