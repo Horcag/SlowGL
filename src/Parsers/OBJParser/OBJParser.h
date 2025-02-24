@@ -6,16 +6,15 @@
 #include "Model3D.h"
 
 
-class OBJParser:public Parser {
+class OBJParser final : public Parser {
 public:
+    static std::vector<sf::Vector3f> parse_vertex(std::ifstream&file);
 
-    std::vector<sf::Vector3f> parse_vertex(std::ifstream &file) const;
+    static std::vector<sf::Vector2f> parse_vertex_texture(std::ifstream&file);
 
-    std::vector<sf::Vector2f> parse_vertex_texture(std::ifstream &file) const;
+    static std::vector<sf::Vector3f> parse_vertex_normal(std::ifstream&file);
 
-    std::vector<sf::Vector3f> parse_vertex_normal(std::ifstream &file) const;
+    static std::vector<Face> parse_faces(std::ifstream&file);
 
-    std::vector<Face> parse_faces(std::ifstream &file) const;
-
-    Model3D parse(std::ifstream& file) const override;
+    Model3D parse(std::ifstream&file) const override;
 };

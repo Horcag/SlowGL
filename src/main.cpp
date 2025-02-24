@@ -101,23 +101,23 @@ bool model_select(char* filename) {
     return false;
 }
 
-bool model_selector(Model3D& model){
+bool model_selector(Model3D&model) {
     static OBJParser parser;
     static char filename[255]{};
-    if(model_select(filename)){
+    if (model_select(filename)) {
         std::ifstream ifs(filename);
         model = parser.parse(ifs);
-        printf("%d\n", model.get_vertex().size());
+        printf("%lu\n", model.get_vertex().size());
         ifs.close();
         return true;
     }
     return false;
 }
 
-void calc_model_scale(const Model3D& model, sf::Vector3f& center, float& factor, int resolution){
+void calc_model_scale(const Model3D&model, sf::Vector3f&center, float& factor, int resolution) {
     sf::Vector3f mins{-FLT_MAX, -FLT_MAX, -FLT_MAX};
     sf::Vector3f maxs{FLT_MAX, FLT_MAX, FLT_MAX};
-    for(auto& vtx = model.beginVertices(); vtx != model.endVertices(); vtx++){
+    for (auto vtx = model.beginVertices(); vtx != model.endVertices(); ++vtx) {
         mins.x = std::max(mins.x, vtx->x);
         mins.y = std::max(mins.y, vtx->y);
         mins.z = std::max(mins.z, vtx->z);
@@ -126,8 +126,9 @@ void calc_model_scale(const Model3D& model, sf::Vector3f& center, float& factor,
         maxs.z = std::min(maxs.z, vtx->z);
     }
     center = (mins + maxs) / 2.f;
-    sf::Vector3f sz = (maxs - mins) / 2.f;
-    factor = (float)resolution / std::max(std::max(std::abs(sz.x), std::abs(sz.y)), std::abs(sz.z)) / 2.f * 0.7f;
+    const sf::Vector3f sz = (maxs - mins) / 2.f;
+    factor = static_cast<float>(resolution) / std::max(std::max(std::abs(sz.x), std::abs(sz.y)), std::abs(sz.z)) / 2.f *
+             0.7f;
 }
 
 const char* previews[] = {
@@ -147,7 +148,7 @@ void SetOptimalFontSize(const ImGuiIO&io, const sf::VideoMode&desktop) {
 
     // Загрузка шрифта с новым размером
     io.Fonts->Clear();
-    ImFont* font = io.Fonts->AddFontFromMemoryTTF(
+    const ImFont* font = io.Fonts->AddFontFromMemoryTTF(
         Inter_VariableFont_opsz_wght_ttf,
         Inter_VariableFont_opsz_wght_ttf_len,
         fontSize,
@@ -221,7 +222,7 @@ int main() {
         if (ImGui::Button("+")) debugView.Zoom(0.5f);
         ImGui::SeparatorText("Render");
         if (ImGui::DragInt("Resolution", &resolution, 1.f, 16, 512)) {
-            if (resolution > 0 && resolution <= 4096){
+            if (resolution > 0 && resolution <= 4096) {
                 image.resize(sf::Vector2u(resolution, resolution));
                 calc_model_scale(current_model, model_center, model_scale, resolution);
             }
@@ -284,14 +285,16 @@ int main() {
             }
             case 3: {
                 //4. Отрисовка вершин трёхмерной модели
-                if(model_selector(current_model)){
+                if (model_selector(current_model)) {
                     calc_model_scale(current_model, model_center, model_scale, resolution);
                 }
 
                 image.clear();
-                for(auto& vtx = current_model.beginVertices();current_model.endVertices() != vtx; vtx++){
+                for (auto vtx = current_model.beginVertices(); current_model.endVertices() != vtx; ++vtx) {
                     sf::Vector3f transformed = (*vtx - model_center) * model_scale;
-                    image.setPixel(sf::Vector2u(transformed.x + resolution/2, transformed.z + resolution/2), sf::Color::Magenta);
+                    //printf("%f %f %f\n", transformed.x, transformed.y, transformed.z);
+                    image.setPixel(sf::Vector2u(transformed.x + resolution / 2, transformed.z + resolution / 2),
+                                   sf::Color::Magenta);
                 }
                 image.update();
 
@@ -301,21 +304,24 @@ int main() {
                 //5. Работа с трёхмерной моделью (полигоны)
                 line_method_combo(lineOptions);
 
-                if(model_selector(current_model)){
+                if (model_selector(current_model)) {
                     calc_model_scale(current_model, model_center, model_scale, resolution);
                 }
-                
-                sf::Vector3f resol(resolution/2, resolution/2, resolution/2);
+
+                sf::Vector3f resol(resolution / 2, resolution / 2, resolution / 2);
                 image.clear();
-                for(int i = 0; i < current_model.get_num_faces(); i++){
+                for (int i = 0; i < current_model.get_num_faces(); i++) {
                     auto tri = current_model.get_tri(i);
                     sf::Vector3f v1_tr = (tri[0] - model_center) * model_scale + resol;
                     sf::Vector3f v2_tr = (tri[1] - model_center) * model_scale + resol;
                     sf::Vector3f v3_tr = (tri[2] - model_center) * model_scale + resol;
 
-                    draw_line(image, lineOptions, sf::Vector2i(v1_tr.x, v1_tr.y), sf::Vector2i(v2_tr.x, v2_tr.y), sf::Color::Green);
-                    draw_line(image, lineOptions, sf::Vector2i(v2_tr.x, v2_tr.y), sf::Vector2i(v3_tr.x, v3_tr.y), sf::Color::Green);
-                    draw_line(image, lineOptions, sf::Vector2i(v1_tr.x, v1_tr.y), sf::Vector2i(v3_tr.x, v3_tr.y), sf::Color::Green);
+                    draw_line(image, lineOptions, sf::Vector2i(v1_tr.x, v1_tr.y), sf::Vector2i(v2_tr.x, v2_tr.y),
+                              sf::Color::Green);
+                    draw_line(image, lineOptions, sf::Vector2i(v2_tr.x, v2_tr.y), sf::Vector2i(v3_tr.x, v3_tr.y),
+                              sf::Color::Green);
+                    draw_line(image, lineOptions, sf::Vector2i(v1_tr.x, v1_tr.y), sf::Vector2i(v3_tr.x, v3_tr.y),
+                              sf::Color::Green);
                 }
                 image.update();
                 break;
