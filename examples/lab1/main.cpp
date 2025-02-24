@@ -195,7 +195,6 @@ bool model_selector(Model3D&model) {
     if (model_select(filename)) {
         std::ifstream ifs(filename);
         model = parser.parse(ifs);
-        printf("%lu\n", model.get_vertex().size());
         ifs.close();
         return true;
     }
