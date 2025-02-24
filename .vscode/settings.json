@@ -1,6 +1,6 @@
 {
     "cmake.configureSettings": {
-        "SLOWGL_BUILD_EXAMPLES": false
+        "SLOWGL_BUILD_EXAMPLES": true
     },
     "files.associations": {
         "optional": "cpp",
