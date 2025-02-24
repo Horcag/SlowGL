@@ -91,7 +91,7 @@ void draw_line(sgl::SFMLImage&image, const LineMethodOptions&opts, const sf::Vec
 }
 
 // Функция для предварительного вычисления трансформаций вершин
-std::vector<sf::Vector3f> compute_transformed_vertices(const Model3D&model, const sf::Vector3f&center,
+inline std::vector<sf::Vector3f> compute_transformed_vertices(const Model3D&model, const sf::Vector3f&center,
                                                        const float scale,
                                                        const sf::Vector3f&resol) {
     std::vector<sf::Vector3f> transformed_vertices;
@@ -399,13 +399,8 @@ int main() {
 
                 sf::Vector3f resol(resolution / 2, resolution / 2, resolution / 2);
                 image.clear();
-
-                // Предварительное вычисление трансформаций вершин в отдельном потоке
-                auto future_transformed_vertices = std::async(std::launch::async, compute_transformed_vertices,
-                                                              std::cref(current_model), std::cref(model_center),
-                                                              model_scale, std::cref(resol));
-                // Ожидание завершения вычислений и получение результата
-                std::vector<sf::Vector3f> transformed_vertices = future_transformed_vertices.get();
+                
+                std::vector<sf::Vector3f> transformed_vertices = compute_transformed_vertices(current_model, model_center, model_scale, resol);
 
                 // Рисование линий
                 // draw_polygon_lines(image, lineOptions, transformed_vertices, current_model);
