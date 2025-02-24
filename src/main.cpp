@@ -14,6 +14,9 @@
 #include <nfd.hpp>
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <thread>
+#include <future>
+#include <algorithm> // std::min
 
 void draw(sgl::SFMLImage&image, int64_t time) {
     image.clear();
@@ -84,6 +87,86 @@ void draw_line(sgl::SFMLImage&image, const LineMethodOptions&opts, const sf::Vec
             break;
         default:
             break;
+    }
+}
+
+// Функция для предварительного вычисления трансформаций вершин
+std::vector<sf::Vector3f> compute_transformed_vertices(const Model3D&model, const sf::Vector3f&center,
+                                                       const float scale,
+                                                       const sf::Vector3f&resol) {
+    std::vector<sf::Vector3f> transformed_vertices;
+    transformed_vertices.reserve(model.get_vertex().size());
+    for (auto vtx = model.beginVertices(); vtx != model.endVertices(); ++vtx) {
+        transformed_vertices.push_back((*vtx - center) * scale + resol);
+    }
+    return transformed_vertices;
+}
+
+// Функция для рисования линий
+void draw_polygon_lines(sgl::SFMLImage&image, const LineMethodOptions&opts,
+                        const std::vector<sf::Vector3f>&transformed_vertices, const Model3D&model) {
+    for (Model3D::PolyIterator poly = model.beginPolygons(); poly != model.endPolygons(); ++poly) {
+        const sf::Vector3f&v1_tr = transformed_vertices[(&poly->vertexIndices.x)[0]];
+        const sf::Vector3f&v2_tr = transformed_vertices[(&poly->vertexIndices.x)[1]];
+        const sf::Vector3f&v3_tr = transformed_vertices[(&poly->vertexIndices.x)[2]];
+
+        draw_line(image, opts, sf::Vector2i(v1_tr.x, v1_tr.y), sf::Vector2i(v2_tr.x, v2_tr.y), sf::Color::Green);
+        draw_line(image, opts, sf::Vector2i(v2_tr.x, v2_tr.y), sf::Vector2i(v3_tr.x, v3_tr.y), sf::Color::Green);
+        draw_line(image, opts, sf::Vector2i(v1_tr.x, v1_tr.y), sf::Vector2i(v3_tr.x, v3_tr.y), sf::Color::Green);
+    }
+}
+
+void draw_polygon_chunk(
+    sgl::SFMLImage&image,
+    const LineMethodOptions&opts,
+    const std::vector<sf::Vector3f>&tverts,
+    const Model3D::PolyIterator beginPoly,
+    const Model3D::PolyIterator endPoly) {
+    for (auto poly = beginPoly; poly != endPoly; ++poly) {
+        const auto&v1 = tverts[(&poly->vertexIndices.x)[0]];
+        const auto&v2 = tverts[(&poly->vertexIndices.x)[1]];
+        const auto&v3 = tverts[(&poly->vertexIndices.x)[2]];
+
+        draw_line(image, opts, sf::Vector2i(v1.x, v1.y), sf::Vector2i(v2.x, v2.y), sf::Color::Green);
+        draw_line(image, opts, sf::Vector2i(v2.x, v2.y), sf::Vector2i(v3.x, v3.y), sf::Color::Green);
+        draw_line(image, opts, sf::Vector2i(v1.x, v1.y), sf::Vector2i(v3.x, v3.y), sf::Color::Green);
+    }
+}
+
+void draw_polygons_multithreaded(
+    sgl::SFMLImage&image,
+    const LineMethodOptions&opts,
+    const std::vector<sf::Vector3f>&transformed_vertices,
+    const Model3D&model,
+    const unsigned int threadCount) {
+    const auto totalPolys = std::distance(model.beginPolygons(), model.endPolygons());
+    if (totalPolys == 0) return;
+
+    // Определяем размер чанка
+    const unsigned int chunkSize = (totalPolys + threadCount - 1) / threadCount;
+
+    std::vector<std::future<void>> tasks;
+    tasks.reserve(threadCount);
+
+    auto beginIt = model.beginPolygons();
+    const auto endIt = model.endPolygons();
+
+    for (unsigned int i = 0; i < threadCount && beginIt != endIt; i++) {
+        auto chunkEnd = beginIt;
+        std::advance(chunkEnd, std::min<unsigned int>(chunkSize, std::distance(chunkEnd, endIt)));
+
+        tasks.push_back(std::async(
+            std::launch::async,
+            [&, beginIt, chunkEnd]() {
+                draw_polygon_chunk(image, opts, transformed_vertices, beginIt, chunkEnd);
+            }
+        ));
+
+        beginIt = chunkEnd;
+    }
+
+    for (auto&t: tasks) {
+        t.get();
     }
 }
 
@@ -317,19 +400,18 @@ int main() {
 
                 sf::Vector3f resol(resolution / 2, resolution / 2, resolution / 2);
                 image.clear();
-                for (Model3D::PolyIterator poly = current_model.beginPolygons(); poly != current_model.endPolygons();
-                     poly++) {
-                    sf::Vector3f v1_tr = (poly.getVertex(0) - model_center) * model_scale + resol;
-                    sf::Vector3f v2_tr = (poly.getVertex(1) - model_center) * model_scale + resol;
-                    sf::Vector3f v3_tr = (poly.getVertex(2) - model_center) * model_scale + resol;
 
-                    draw_line(image, lineOptions, sf::Vector2i(v1_tr.x, v1_tr.y), sf::Vector2i(v2_tr.x, v2_tr.y),
-                              sf::Color::Green);
-                    draw_line(image, lineOptions, sf::Vector2i(v2_tr.x, v2_tr.y), sf::Vector2i(v3_tr.x, v3_tr.y),
-                              sf::Color::Green);
-                    draw_line(image, lineOptions, sf::Vector2i(v1_tr.x, v1_tr.y), sf::Vector2i(v3_tr.x, v3_tr.y),
-                              sf::Color::Green);
-                }
+                // Предварительное вычисление трансформаций вершин в отдельном потоке
+                auto future_transformed_vertices = std::async(std::launch::async, compute_transformed_vertices,
+                                                              std::cref(current_model), std::cref(model_center),
+                                                              model_scale, std::cref(resol));
+                // Ожидание завершения вычислений и получение результата
+                std::vector<sf::Vector3f> transformed_vertices = future_transformed_vertices.get();
+
+                // Рисование линий
+                // draw_polygon_lines(image, lineOptions, transformed_vertices, current_model);
+                draw_polygons_multithreaded(image, lineOptions, transformed_vertices, current_model, 16);
+
                 image.update();
                 break;
             }
