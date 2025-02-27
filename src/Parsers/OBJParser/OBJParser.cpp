@@ -76,7 +76,11 @@ std::vector<Face> OBJParser::parse_faces(std::ifstream&file) {
         std::string pref;
         lineStream >> pref;
         if (pref == "f") {
-            std::array<int *, 3> indices = {&face.vertexIndices.x, &face.vertexIndices.y, &face.vertexIndices.z};
+            std::array<int *, 3> vertexIndices = {&face.vertexIndices.x, &face.vertexIndices.y, &face.vertexIndices.z};
+            std::array<int *, 3> textureIndices = {
+                &face.textureIndices.x, &face.textureIndices.y, &face.textureIndices.z
+            };
+            std::array<int *, 3> normalIndices = {&face.normalIndices.x, &face.normalIndices.y, &face.normalIndices.z};
 
             for (int i = 0; i < 3; ++i) {
                 std::string faceData;
@@ -84,12 +88,13 @@ std::vector<Face> OBJParser::parse_faces(std::ifstream&file) {
                 std::replace(faceData.begin(), faceData.end(), '/', ' ');
                 std::istringstream faceDataStream(faceData);
 
-                faceDataStream >> *indices[i] >> *indices[i + 3] >> *indices[i + 6];
-                // textureIndices и normalIndices по аналогии
-                (*indices[i])--;
-                (*indices[i + 3])--;
-                (*indices[i + 6])--;
+                faceDataStream >> *vertexIndices[i] >> *textureIndices[i] >> *normalIndices[i];
+
+                (*vertexIndices[i])--;
+                (*textureIndices[i])--;
+                (*normalIndices[i])--;
             }
+
 
             result.push_back(face);
         }
