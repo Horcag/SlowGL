@@ -201,7 +201,7 @@ bool model_selector(Model3D&model) {
     return false;
 }
 
-void calc_model_scale(const Model3D&model, sf::Vector3f&center, float&factor, int resolution) {
+void calc_model_scale(const Model3D&model, sf::Vector3f&center, float&factor, const int resolution) {
     sf::Vector3f mins{-FLT_MAX, -FLT_MAX, -FLT_MAX};
     sf::Vector3f maxs{FLT_MAX, FLT_MAX, FLT_MAX};
     for (auto vtx = model.beginVertices(); vtx != model.endVertices(); ++vtx) {

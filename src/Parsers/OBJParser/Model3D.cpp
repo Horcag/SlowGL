@@ -35,12 +35,10 @@ void Model3D::set_faces(const std::vector<Face>&newBufferF) {
 //const sf::Vector3f &Model3D::PolyIterator::getVertex(int i) const
 
 
-const sf::Vector2f &Model3D::PolyIterator::getUv(int i) const
-{
+const sf::Vector2f& Model3D::PolyIterator::getUv(const int i) const {
     return m_model->vertex_texture[(&m_ptr->textureIndices.x)[i]];
 }
 
-const sf::Vector3f &Model3D::PolyIterator::getNormal(int i) const
-{
+const sf::Vector3f& Model3D::PolyIterator::getNormal(const int i) const {
     return m_model->vertex_normal[(&m_ptr->normalIndices.x)[i]];
 }

@@ -76,16 +76,21 @@ std::vector<Face> OBJParser::parse_faces(std::ifstream&file) {
         std::string pref;
         lineStream >> pref;
         if (pref == "f") {
+            std::array<int *, 3> indices = {&face.vertexIndices.x, &face.vertexIndices.y, &face.vertexIndices.z};
+
             for (int i = 0; i < 3; ++i) {
                 std::string faceData;
                 lineStream >> faceData;
                 std::replace(faceData.begin(), faceData.end(), '/', ' ');
                 std::istringstream faceDataStream(faceData);
-                faceDataStream >> (&face.vertexIndices.x)[i] >> (&face.textureIndices.x)[i] >> (&face.normalIndices.x)[i]; //это безопасно честно)
-                (&face.vertexIndices.x)[i]--;
-                (&face.textureIndices.x)[i]--;
-                (&face.normalIndices.x)[i]--;
+
+                faceDataStream >> *indices[i] >> *indices[i + 3] >> *indices[i + 6];
+                // textureIndices и normalIndices по аналогии
+                (*indices[i])--;
+                (*indices[i + 3])--;
+                (*indices[i + 6])--;
             }
+
             result.push_back(face);
         }
     }
@@ -124,7 +129,8 @@ Model3D OBJParser::parse(std::ifstream&file) const {
                 lineStream >> faceData;
                 std::replace(faceData.begin(), faceData.end(), '/', ' ');
                 std::istringstream faceDataStream(faceData);
-                faceDataStream >> (&face.vertexIndices.x)[i] >> (&face.textureIndices.x)[i] >> (&face.normalIndices.x)[i]; //это безопасно честно)
+                faceDataStream >> (&face.vertexIndices.x)[i] >> (&face.textureIndices.x)[i] >> (&face.normalIndices.x)[
+                    i]; //это безопасно честно)
                 (&face.vertexIndices.x)[i]--;
                 (&face.textureIndices.x)[i]--;
                 (&face.normalIndices.x)[i]--;

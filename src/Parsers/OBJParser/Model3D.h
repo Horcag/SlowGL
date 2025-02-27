@@ -28,13 +28,13 @@ public:
         PolyIterator(const Model3D* model, pointer ptr) : m_model(model), m_ptr(ptr) {
         }
 
-        inline const sf::Vector3f& getVertex(int i) const {
+        [[nodiscard]] inline const sf::Vector3f& getVertex(int i) const {
             return m_model->vertex[(&m_ptr->vertexIndices.x)[i]];
         }
 
-        const sf::Vector2f& getUv(int i) const;
+        [[nodiscard]] const sf::Vector2f& getUv(int i) const;
 
-        const sf::Vector3f& getNormal(int i) const;
+        [[nodiscard]] const sf::Vector3f& getNormal(int i) const;
 
         reference operator*() const { return *m_ptr; }
         pointer operator->() { return m_ptr; }
@@ -86,8 +86,8 @@ public:
     [[nodiscard]] std::vector<sf::Vector3f>::const_iterator beginVertices() const { return vertex.begin(); }
     [[nodiscard]] std::vector<sf::Vector3f>::const_iterator endVertices() const { return vertex.end(); };
 
-    [[nodiscard]] PolyIterator beginPolygons() const { return {this, &(*faces.begin())}; };
-    [[nodiscard]] PolyIterator endPolygons() const { return {this, &(*faces.end())}; };
+    [[nodiscard]] PolyIterator beginPolygons() const { return {this, faces.data()}; }
+    [[nodiscard]] PolyIterator endPolygons() const { return {this, faces.data() + faces.size()}; }
 };
 
 #endif //BUFFER_H
