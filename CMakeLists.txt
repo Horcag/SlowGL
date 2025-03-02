@@ -23,7 +23,15 @@ FetchContent_Declare(SFML
         SYSTEM)
 FetchContent_MakeAvailable(SFML)
 
-target_link_libraries(SlowGL PRIVATE sfml-graphics)
+FetchContent_Declare(glm
+        GIT_REPOSITORY https://github.com/g-truc/glm.git
+        GIT_TAG 1.0.1
+        GIT_SHALLOW ON
+        EXCLUDE_FROM_ALL
+        SYSTEM)
+FetchContent_MakeAvailable(glm)
+
+target_link_libraries(SlowGL PRIVATE sfml-graphics glm::glm)
 target_compile_features(SlowGL PRIVATE cxx_std_17)
 
 # Add examples
