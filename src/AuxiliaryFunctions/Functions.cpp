@@ -20,3 +20,16 @@ sf::Vector3f barycentric_coord(const std::array<sf::Vector2f, 3> &triangle_coord
 bool is_inside(const sf::Vector3f& baryc_coord) {
     return baryc_coord.x < 0 && baryc_coord.y < 0 && baryc_coord.z < 0;
 }
+
+sf::Vector3f cross_product(const sf::Vector3f& v1, const sf::Vector3f& v2) {
+    return {
+        v1.y * v2.z - v1.z * v2.y,
+        v1.z * v2.x - v1.x * v2.z,
+        v1.x * v2.y - v1.y * v2.x
+        };
+}
+
+float clip_edge(const sf::Vector3f& triangle_normal) {
+    return (triangle_normal.x * light_direction.x + triangle_normal.y * light_direction.y + triangle_normal.z * light_direction.z) / (triangle_normal.x * triangle_normal.x + triangle_normal.y * triangle_normal.y + triangle_normal.z * triangle_normal.z);
+}
+
