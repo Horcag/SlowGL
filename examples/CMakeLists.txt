@@ -35,6 +35,9 @@ FetchContent_Declare(ImGui-SFML
         SYSTEM)
 FetchContent_MakeAvailable(ImGui-SFML)
 
+# Add include directories
 include_directories(${CMAKE_SOURCE_DIR}/src)
+include_directories(${CMAKE_SOURCE_DIR}/fonts/Inter)
+
 
 add_subdirectory(lab1)

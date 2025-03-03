@@ -40,12 +40,6 @@ if (SLOWGL_BUILD_EXAMPLES)
         add_subdirectory(examples)
 endif ()
 
-# Копируем шрифты в выходную директорию
-file(COPY ${CMAKE_SOURCE_DIR}/fonts DESTINATION ${CMAKE_BINARY_DIR}/bin)
-
-# Add include directories
-include_directories(${CMAKE_SOURCE_DIR}/fonts/Inter)
-
 # Игорь не фикси тесты
 # Add tests
 #if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
