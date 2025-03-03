@@ -6,8 +6,13 @@ void triangle_draw(sgl::SFMLImage& image, const std::array<sf::Vector2f, 3>& tri
     double y_min = std::min(std::min(triangle_coord[0].y, triangle_coord[1].y), triangle_coord[2].y);
     y_min *= (y_min > 0);
     double x_max = std::max(std::max(triangle_coord[0].x, triangle_coord[1].x), triangle_coord[2].x);
+    if(x_max > image.size.x){
+      x_max = image.size.x;
+    }
     double y_max = std::max(std::max(triangle_coord[0].y, triangle_coord[1].y), triangle_coord[2].y);
-
+	if(y_max > image.size.y){
+          y_max = image.size.y;
+	}
     for (auto x = x_min; x < x_max; ++x) {
         for (auto y = y_min; y < y_max; ++y) {
             sf::Vector2u coord = {static_cast<unsigned int>(x), static_cast<unsigned int>(y)};

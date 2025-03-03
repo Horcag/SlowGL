@@ -18,7 +18,7 @@
 #include <future>
 #include <algorithm> // std::min
 
-void draw(sgl::SFMLImage&image, int64_t time) {
+void draw(sgl::SFMLImage &image, int64_t time) {
     image.clear();
     for (unsigned int i = 0; i < image.getSize().x; i++) {
         for (unsigned int j = 0; j < image.getSize().y; j++) {
@@ -33,8 +33,8 @@ struct LineMethodOptions {
     int current_method = 0;
 };
 
-bool line_method_combo(LineMethodOptions&options) {
-    static const char* methods[] = {
+bool line_method_combo(LineMethodOptions &options) {
+    static const char *methods[] = {
         "dotted_line", "dotted_line_v2", "x_loop_line", "x_loop_line_hotfix_1", "x_loop_line_hotfix_2",
         "x_loop_line_v2", "x_loop_line_v2_no_y_calc", "x_loop_line_v2_no_y_calc_for_some_unknown_reason",
         "bresenham line", "EFLA"
@@ -52,7 +52,7 @@ bool line_method_combo(LineMethodOptions&options) {
     return res;
 }
 
-void draw_line(sgl::SFMLImage&image, const LineMethodOptions&opts, const sf::Vector2i&start, const sf::Vector2i&end,
+void draw_line(sgl::SFMLImage &image, const LineMethodOptions &opts, const sf::Vector2i &start, const sf::Vector2i &end,
                sf::Color color) {
     switch (opts.current_method) {
         case 0:
@@ -91,9 +91,9 @@ void draw_line(sgl::SFMLImage&image, const LineMethodOptions&opts, const sf::Vec
 }
 
 // Функция для предварительного вычисления трансформаций вершин
-inline std::vector<sf::Vector3f> compute_transformed_vertices(const Model3D&model, const sf::Vector3f&center,
-                                                       const float scale,
-                                                       const sf::Vector3f&resol) {
+inline std::vector<sf::Vector3f> compute_transformed_vertices(const Model3D &model, const sf::Vector3f &center,
+                                                              const float scale,
+                                                              const sf::Vector3f &resol) {
     std::vector<sf::Vector3f> transformed_vertices;
     transformed_vertices.reserve(model.get_vertex().size());
     for (auto vtx = model.beginVertices(); vtx != model.endVertices(); ++vtx) {
@@ -103,12 +103,12 @@ inline std::vector<sf::Vector3f> compute_transformed_vertices(const Model3D&mode
 }
 
 // Функция для рисования линий
-void draw_polygon_lines(sgl::SFMLImage&image, const LineMethodOptions&opts,
-                        const std::vector<sf::Vector3f>&transformed_vertices, const Model3D&model) {
+void draw_polygon_lines(sgl::SFMLImage &image, const LineMethodOptions &opts,
+                        const std::vector<sf::Vector3f> &transformed_vertices, const Model3D &model) {
     for (Model3D::PolyIterator poly = model.beginPolygons(); poly != model.endPolygons(); ++poly) {
-        const sf::Vector3f&v1_tr = transformed_vertices[(&poly->vertexIndices.x)[0]];
-        const sf::Vector3f&v2_tr = transformed_vertices[(&poly->vertexIndices.x)[1]];
-        const sf::Vector3f&v3_tr = transformed_vertices[(&poly->vertexIndices.x)[2]];
+        const sf::Vector3f &v1_tr = transformed_vertices[(&poly->vertexIndices.x)[0]];
+        const sf::Vector3f &v2_tr = transformed_vertices[(&poly->vertexIndices.x)[1]];
+        const sf::Vector3f &v3_tr = transformed_vertices[(&poly->vertexIndices.x)[2]];
 
         draw_line(image, opts, sf::Vector2i(v1_tr.x, v1_tr.y), sf::Vector2i(v2_tr.x, v2_tr.y), sf::Color::Green);
         draw_line(image, opts, sf::Vector2i(v2_tr.x, v2_tr.y), sf::Vector2i(v3_tr.x, v3_tr.y), sf::Color::Green);
@@ -117,15 +117,15 @@ void draw_polygon_lines(sgl::SFMLImage&image, const LineMethodOptions&opts,
 }
 
 void draw_polygon_chunk(
-    sgl::SFMLImage&image,
-    const LineMethodOptions&opts,
-    const std::vector<sf::Vector3f>&tverts,
+    sgl::SFMLImage &image,
+    const LineMethodOptions &opts,
+    const std::vector<sf::Vector3f> &tverts,
     const Model3D::PolyIterator beginPoly,
     const Model3D::PolyIterator endPoly) {
     for (auto poly = beginPoly; poly != endPoly; ++poly) {
-        const auto&v1 = tverts[(&poly->vertexIndices.x)[0]];
-        const auto&v2 = tverts[(&poly->vertexIndices.x)[1]];
-        const auto&v3 = tverts[(&poly->vertexIndices.x)[2]];
+        const auto &v1 = tverts[(&poly->vertexIndices.x)[0]];
+        const auto &v2 = tverts[(&poly->vertexIndices.x)[1]];
+        const auto &v3 = tverts[(&poly->vertexIndices.x)[2]];
 
         draw_line(image, opts, sf::Vector2i(v1.x, v1.y), sf::Vector2i(v2.x, v2.y), sf::Color::Green);
         draw_line(image, opts, sf::Vector2i(v2.x, v2.y), sf::Vector2i(v3.x, v3.y), sf::Color::Green);
@@ -134,10 +134,10 @@ void draw_polygon_chunk(
 }
 
 void draw_polygons_multithreaded(
-    sgl::SFMLImage&image,
-    const LineMethodOptions&opts,
-    const std::vector<sf::Vector3f>&transformed_vertices,
-    const Model3D&model,
+    sgl::SFMLImage &image,
+    const LineMethodOptions &opts,
+    const std::vector<sf::Vector3f> &transformed_vertices,
+    const Model3D &model,
     const unsigned int threadCount) {
     const auto totalPolys = std::distance(model.beginPolygons(), model.endPolygons());
     if (totalPolys == 0) return;
@@ -145,7 +145,7 @@ void draw_polygons_multithreaded(
     // Определяем размер чанка
     const unsigned int chunkSize = (totalPolys + threadCount - 1) / threadCount;
 
-    std::vector<std::future<void>> tasks;
+    std::vector<std::future<void> > tasks;
     tasks.reserve(threadCount);
 
     auto beginIt = model.beginPolygons();
@@ -165,12 +165,12 @@ void draw_polygons_multithreaded(
         beginIt = chunkEnd;
     }
 
-    for (auto&t: tasks) {
+    for (auto &t: tasks) {
         t.get();
     }
 }
 
-bool model_select(char* filename) {
+bool model_select(char *filename) {
     ImGui::InputText("3D model", filename, 255, ImGuiInputTextFlags_CharsNoBlank);
     if (ImGui::Button("Select file")) {
         NFD::UniquePath outPath;
@@ -189,7 +189,7 @@ bool model_select(char* filename) {
     return false;
 }
 
-bool model_selector(Model3D&model) {
+bool model_selector(Model3D &model) {
     static OBJParser parser;
     static char filename[255]{};
     if (model_select(filename)) {
@@ -201,7 +201,7 @@ bool model_selector(Model3D&model) {
     return false;
 }
 
-void calc_model_scale(const Model3D&model, sf::Vector3f&center, float&factor, const int resolution) {
+void calc_model_scale(const Model3D &model, sf::Vector3f &center, float &factor, const int resolution) {
     sf::Vector3f mins{-FLT_MAX, -FLT_MAX, -FLT_MAX};
     sf::Vector3f maxs{FLT_MAX, FLT_MAX, FLT_MAX};
     for (auto vtx = model.beginVertices(); vtx != model.endVertices(); ++vtx) {
@@ -218,13 +218,13 @@ void calc_model_scale(const Model3D&model, sf::Vector3f&center, float&factor, co
              0.7f;
 }
 
-const char* previews[] = {
+const char *previews[] = {
     "1. Image manipulation", "2. Straight lines", "3. 3D Model", "4. 3D Model vertices", "5. 3D Model (Polygons)",
     "6. 3D Model edges"
 };
 
 // Функция для установки оптимального размера шрифта
-void SetOptimalFontSize(const ImGuiIO&io, const sf::VideoMode&desktop) {
+void SetOptimalFontSize(const ImGuiIO &io, const sf::VideoMode &desktop) {
     constexpr float baseFontSize = 18.0f; // Базовый размер шрифта
     const float scaleFactor = std::min(static_cast<float>(desktop.size.x) / 1920.0f,
                                        static_cast<float>(desktop.size.y) / 1080.0f);
@@ -235,7 +235,7 @@ void SetOptimalFontSize(const ImGuiIO&io, const sf::VideoMode&desktop) {
 
     // Загрузка шрифта с новым размером
     io.Fonts->Clear();
-    const ImFont* font = io.Fonts->AddFontFromMemoryTTF(
+    const ImFont *font = io.Fonts->AddFontFromMemoryTTF(
         Inter_VariableFont_opsz_wght_ttf,
         Inter_VariableFont_opsz_wght_ttf_len,
         fontSize,
@@ -268,7 +268,7 @@ int main() {
     sf::Vector3f model_center{};
     float model_scale = 0;
 
-    ImGuiIO&io = ImGui::GetIO();
+    ImGuiIO &io = ImGui::GetIO();
     SetOptimalFontSize(io, desktop);
 
     int resolution = 16;
@@ -284,7 +284,7 @@ int main() {
 
             if (event->is<sf::Event::Closed>())
                 window.close();
-            else if (const auto* resized = event->getIf<sf::Event::Resized>())
+            else if (const auto *resized = event->getIf<sf::Event::Resized>())
                 windowSize = resized->size;
             if (!ImGui::GetIO().WantCaptureMouse && event.has_value()) {
                 debugView.ProcessEvent(event.value());
@@ -342,7 +342,7 @@ int main() {
                                           static_cast<ImVec4>(ImColor::HSV(i / 3.0f, 0.7f, 0.5f)));
                     ImGui::PushStyleColor(ImGuiCol_SliderGrab, static_cast<ImVec4>(ImColor::HSV(i / 3.0f, 0.9f, 0.9f)));
 
-                    const char* labels[] = {"R", "G", "B"};
+                    const char *labels[] = {"R", "G", "B"};
                     ImGui::SliderInt(labels[i], &rgb[i], 0, 255);
 
                     ImGui::PopStyleColor(4);
@@ -399,8 +399,9 @@ int main() {
 
                 sf::Vector3f resol(resolution / 2, resolution / 2, resolution / 2);
                 image.clear();
-                
-                std::vector<sf::Vector3f> transformed_vertices = compute_transformed_vertices(current_model, model_center, model_scale, resol);
+
+                std::vector<sf::Vector3f> transformed_vertices = compute_transformed_vertices(
+                    current_model, model_center, model_scale, resol);
 
                 // Рисование линий
                 // draw_polygon_lines(image, lineOptions, transformed_vertices, current_model);
