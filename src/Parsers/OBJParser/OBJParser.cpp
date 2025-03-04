@@ -99,8 +99,16 @@ std::vector<Face> OBJParser::parse_faces(std::ifstream&file) {
             result.push_back(face);
         }
     }
-    file.seekg(0, std::ios::beg);
-    return result;
+
+    file
+            .
+            seekg(
+                0
+                ,
+                std::ios::beg
+            );
+    return
+            result;
 }
 
 Model3D OBJParser::parse(std::ifstream&file) const {

@@ -3,7 +3,7 @@
 #include "imgui-SFML.h" // for ImGui::SFML::* functions and SFML-specific overloads
 
 #include <SFML/Graphics.hpp>
-#include "render/lines.h"
+#include "Render/lines.h"
 #include "Image/SFMLImage.h"
 #include "Debug/DebugView.h"
 #include "Inter-VariableFont.h"
@@ -46,6 +46,8 @@ bool line_method_combo(LineMethodOptions&options) {
     if (options.current_method == 0) {
         if (ImGui::DragInt("Dots", &options.dotted_line_dots, 1.f, 16, 512))
             if (options.dotted_line_dots <= 0 || options.dotted_line_dots >= 2048)
+
+
                 options.dotted_line_dots = 100;
     }
 
@@ -92,8 +94,8 @@ void draw_line(sgl::SFMLImage&image, const LineMethodOptions&opts, const sf::Vec
 
 // Функция для предварительного вычисления трансформаций вершин
 inline std::vector<sf::Vector3f> compute_transformed_vertices(const Model3D&model, const sf::Vector3f&center,
-                                                       const float scale,
-                                                       const sf::Vector3f&resol) {
+                                                              const float scale,
+                                                              const sf::Vector3f&resol) {
     std::vector<sf::Vector3f> transformed_vertices;
     transformed_vertices.reserve(model.get_vertex().size());
     for (auto vtx = model.beginVertices(); vtx != model.endVertices(); ++vtx) {
@@ -399,8 +401,9 @@ int main() {
 
                 sf::Vector3f resol(resolution / 2, resolution / 2, resolution / 2);
                 image.clear();
-                
-                std::vector<sf::Vector3f> transformed_vertices = compute_transformed_vertices(current_model, model_center, model_scale, resol);
+
+                std::vector<sf::Vector3f> transformed_vertices = compute_transformed_vertices(
+                    current_model, model_center, model_scale, resol);
 
                 // Рисование линий
                 // draw_polygon_lines(image, lineOptions, transformed_vertices, current_model);

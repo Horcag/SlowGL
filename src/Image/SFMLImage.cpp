@@ -1,14 +1,15 @@
 #include "SFMLImage.h"
 
-sgl::SFMLImage::SFMLImage(sf::Vector2u size, sf::Color clear_color) : image(size, clear_color), texture(size),
-                                                                      sprite(texture), clear_color(clear_color) {
+sgl::SFMLImage::SFMLImage(const sf::Vector2u size, const sf::Color clear_color) : image(size, clear_color),
+    texture(size),
+    sprite(texture), clear_color(clear_color) {
     this->size.x = size.x;
     this->size.y = size.y;
     center = {0, 0};
     transformSprite();
 }
 
-void sgl::SFMLImage::setPixel(sf::Vector2u coords, sf::Color color) {
+void sgl::SFMLImage::setPixel(const sf::Vector2u coords, const sf::Color color) {
     image.setPixel(coords, color);
 }
 
@@ -16,7 +17,7 @@ void sgl::SFMLImage::clear() {
     image.resize(image.getSize(), clear_color);
 }
 
-void sgl::SFMLImage::clear(sf::Color color) {
+void sgl::SFMLImage::clear(const sf::Color color) {
     image.resize(image.getSize(), color);
 }
 
@@ -39,7 +40,7 @@ sf::Vector2u sgl::SFMLImage::getSize() const {
     return image.getSize();
 }
 
-bool sgl::SFMLImage::saveToFile(std::filesystem::path path) const {
+bool sgl::SFMLImage::saveToFile(const std::filesystem::path&path) const {
     return image.saveToFile(path);
 }
 
