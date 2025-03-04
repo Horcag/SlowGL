@@ -8,7 +8,8 @@ unsigned int linear_interpolation(const int start, const int end, const double t
 }
 
 namespace sgl::render {
-    void draw_dotted_line(sgl::SFMLImage&image, const sf::Vector2i start, const sf::Vector2i end, const sf::Color color,
+    void draw_dotted_line(sgl::SFMLImage &image, const sf::Vector2i start, const sf::Vector2i end,
+                          const sf::Color color,
                           const unsigned int count) {
         const double step = 1.0 / count;
         for (double i = 0; i < 1; i += step) {
@@ -20,7 +21,7 @@ namespace sgl::render {
         }
     }
 
-    void draw_dotted_line_fix1(sgl::SFMLImage&image, const sf::Vector2i start, const sf::Vector2i end,
+    void draw_dotted_line_fix1(sgl::SFMLImage &image, const sf::Vector2i start, const sf::Vector2i end,
                                const sf::Color color) {
         // const double count = sf::Vector2f(start - end).length();
         const double count = std::sqrt(std::pow(start.x - end.x, 2) + std::pow(start.y - end.y, 2));
@@ -34,7 +35,7 @@ namespace sgl::render {
         }
     }
 
-    void draw_dotted_line_loop_v1(sgl::SFMLImage&image, const sf::Vector2i start, const sf::Vector2i end,
+    void draw_dotted_line_loop_v1(sgl::SFMLImage &image, const sf::Vector2i start, const sf::Vector2i end,
                                   const sf::Color color) {
         for (int x = start.x; x < end.x; ++x) {
             const double t = (x - start.x) / static_cast<double>(end.x - start.x);
@@ -43,7 +44,7 @@ namespace sgl::render {
         }
     }
 
-    void draw_dotted_line_loop_fix1(sgl::SFMLImage&image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
+    void draw_dotted_line_loop_fix1(sgl::SFMLImage &image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
         if (start.x > end.x) {
             std::swap(start.x, end.x);
             std::swap(start.y, end.y);
@@ -55,7 +56,7 @@ namespace sgl::render {
         }
     }
 
-    void draw_dotted_line_loop_fix2(sgl::SFMLImage&image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
+    void draw_dotted_line_loop_fix2(sgl::SFMLImage &image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
         bool xChange = false;
         if (std::abs(start.x - end.x) < std::abs(start.y - end.y)) {
             std::swap(start.x, start.y);
@@ -69,7 +70,7 @@ namespace sgl::render {
         }
     }
 
-    void draw_x_loop_dotted_line_v2(sgl::SFMLImage&image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
+    void draw_x_loop_dotted_line_v2(sgl::SFMLImage &image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
         bool xChange = false;
         if (std::abs(start.x - end.x) < std::abs(start.y - end.y)) {
             std::swap(start.x, start.y);
@@ -87,7 +88,7 @@ namespace sgl::render {
         }
     }
 
-    void draw_x_loop_dotted_line_no_y(sgl::SFMLImage&image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
+    void draw_x_loop_dotted_line_no_y(sgl::SFMLImage &image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
         bool xChange = false;
         if (std::abs(start.x - end.x) < std::abs(start.y - end.y)) {
             std::swap(start.x, start.y);
@@ -114,7 +115,7 @@ namespace sgl::render {
         }
     }
 
-    void draw_x_loop_dotted_line_no_y_v2(sgl::SFMLImage&image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
+    void draw_x_loop_dotted_line_no_y_v2(sgl::SFMLImage &image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
         bool xChange = false;
         if (std::abs(start.x - end.x) < std::abs(start.y - end.y)) {
             std::swap(start.x, start.y);
@@ -141,7 +142,7 @@ namespace sgl::render {
         }
     }
 
-    void draw_bresenham(sgl::SFMLImage&image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
+    void draw_bresenham(sgl::SFMLImage &image, sf::Vector2i start, sf::Vector2i end, sf::Color color) {
         bool xChange = false;
         if (std::abs(start.x - end.x) < std::abs(start.y - end.y)) {
             std::swap(start.x, start.y);
@@ -169,7 +170,7 @@ namespace sgl::render {
     }
 
     //http://www.edepot.com/linea.html
-    void draw_efla(sgl::SFMLImage&image, const sf::Vector2i&start, const sf::Vector2i&end, sf::Color color) {
+    void draw_efla(sgl::SFMLImage &image, const sf::Vector2i &start, const sf::Vector2i &end, sf::Color color) {
         bool yLonger = false;
         int incrementVal;
 
@@ -195,8 +196,7 @@ namespace sgl::render {
                                    static_cast<unsigned>(start.y + i)
                                }, color);
             }
-        }
-        else {
+        } else {
             for (int i = 0; i != longLen; i += incrementVal) {
                 image.setPixel({
                                    static_cast<unsigned>(start.x + i),

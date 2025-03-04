@@ -1,5 +1,4 @@
 #include "OBJParser.h"
-
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -7,7 +6,7 @@
 #include <vector>
 #include "Model3D.h"
 
-std::vector<sf::Vector3f> OBJParser::parse_vertex(std::ifstream&file) {
+std::vector<sf::Vector3f> OBJParser::parse_vertex(std::ifstream&file){
     std::vector<sf::Vector3f> result;
     std::string line;
     double x, y, z;
