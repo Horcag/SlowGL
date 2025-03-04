@@ -41,3 +41,4 @@ include_directories(${CMAKE_SOURCE_DIR}/fonts/Inter)
 
 
 add_subdirectory(lab1)
+add_subdirectory(lab2)
