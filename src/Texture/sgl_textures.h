@@ -22,6 +22,9 @@ namespace sgl {
             inline void setPixel(glm::uvec2 pos, T value){ setPixel(pos.x, pos.y, value); }
             T getPixel(uint32_t x, uint32_t y);
             inline T getPixel(glm::uvec2 pos){ return getPixel(pos.x, pos.y); }
+            uint32_t getWidth(){ return width; };
+            uint32_t getHeight(){ return height; };
+            glm::uvec2 getSize(){ return glm::uvec2(width, height); };
         };
 
     }
