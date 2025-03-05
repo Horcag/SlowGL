@@ -44,19 +44,19 @@ namespace sgl {
 
         bool selectModel();
 
-        void calculateModelScale(const Model3D&model, sf::Vector3f&center, float&factor, int resolution);
+        static void calculateModelScale(const Model3D&model, sf::Vector3f&center, float&factor, int resolution);
 
-        void drawTriangle(sgl::SFMLImage&image, int index = -1);
+        void drawTriangle(sgl::SFMLImage&image, int index = -1) const;
 
-        void drawModelPolygons(sgl::SFMLImage&image, bool useLight = false, bool useZBuffer = false);
+        void drawModelPolygons(sgl::SFMLImage&image, bool useLight = false, bool useZBuffer = false) const;
 
         void generateTriangles(int count);
 
-        sf::Color getRandomColor();
+        static sf::Color getRandomColor();
 
-        sf::Vector3f calculateNormal(const sf::Vector3f&v0, const sf::Vector3f&v1, const sf::Vector3f&v2);
+        static sf::Vector3f calculateNormal(const sf::Vector3f&v0, const sf::Vector3f&v1, const sf::Vector3f&v2);
 
-        float calculateLightCosine(const sf::Vector3f&normal, const sf::Vector3f&light);
+        static float calculateLightCosine(const sf::Vector3f&normal, const sf::Vector3f&light);
 
         PreviewMode m_currentPreview = PreviewMode::SingleTriangle;
         OBJParser m_parser;
