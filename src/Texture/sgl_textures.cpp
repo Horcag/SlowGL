@@ -1,14 +1,23 @@
 #include "sgl_textures.h"
+#include "../Render/utils/render_utils.h"
 
 namespace sgl::utils {
     template<typename T>
     IBaseTexture<T>::IBaseTexture(uint32_t width, uint32_t height) : width(width), height(height) {
-        data.resize(width, height);
+        data.resize(width * height);
     }
 
     template<typename T>
     void IBaseTexture<T>::clear(T value) {
-        memset(data.data(), value, width * height * sizeof(T));
+        std::fill(data.begin(), data.end(), value);
+    }
+
+    template <typename T>
+    void IBaseTexture<T>::resize(uint32_t width, uint32_t height)
+    {
+        this->width = width;
+        this->height = height;
+        data.resize(width * height);
     }
 
     template<typename T>
@@ -20,6 +29,9 @@ namespace sgl::utils {
     T IBaseTexture<T>::getPixel(uint32_t x, uint32_t y) {
         return data[x + y * height];
     }
+
+    template class IBaseTexture<float>;
+    template class IBaseTexture<uint32_t>;
 }
 
 void sgl::DepthTexture::drawTo(sf::Image image) {
@@ -42,12 +54,11 @@ void sgl::DepthTexture::drawTo(sf::Image image) {
 }
 
 void sgl::ColorTexture::setPixel(uint32_t x, uint32_t y, sf::Color color) {
-    data[x + y * width] = color.toInteger();
+    if(x > width || y > height) return;
+    data[x + y * width] = sgl::utils::colorToInteger(color);
 }
 
-void sgl::ColorTexture::drawTo(sf::Image image) {
-    for (auto p = data.begin(); p < data.end(); ++p) {
-        const uint32_t index = p - data.begin();
-        image.setPixel(sf::Vector2u(index % width, index / width), sf::Color(*p));
-    }
+void sgl::ColorTexture::drawTo(sf::Texture& image) {
+    image.update((const uint8_t*)data.data());
 }
+

@@ -7,7 +7,9 @@
 #include "SFML/System/Vector2.hpp"
 #include "SFML/System/Vector3.hpp"
 #include "../Image/SFMLImage.h"
-
+#include "../Texture/sgl_textures.h"
+#include <glm/ext/vector_float3.hpp>
+#include <glm/ext/matrix_float4x4.hpp>
 
 namespace sgl::render {
     /**
@@ -37,5 +39,8 @@ namespace sgl::render {
      */
     void drawTriangle(sgl::SFMLImage&image, const sf::Vector2f&v0, const sf::Vector2f&v1, const sf::Vector2f&v2,
                       const sf::Color&color);
+
+
+    void drawTriangleTransform(sgl::ColorTexture& target, const glm::mat4 transform, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, sf::Color color);
 }
 #endif //TRIANGLES_H

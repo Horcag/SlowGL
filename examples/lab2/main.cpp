@@ -17,6 +17,11 @@
 #include <thread>
 #include <future>
 #include <algorithm> // std::min
+#include "Texture/sgl_textures.h"
+#include <glm/ext.hpp>
+#include <glm/common.hpp>
+#include "Utility/glm_converters.h"
+#include "Render/triangles.h"
 
 void draw(sgl::SFMLImage &image, int64_t time) {
     image.clear();
@@ -72,21 +77,14 @@ bool model_selector(Model3D &model) {
     return false;
 }
 
-void calc_model_scale(const Model3D &model, sf::Vector3f &center, float &factor, const int resolution) {
-    sf::Vector3f mins{-FLT_MAX, -FLT_MAX, -FLT_MAX};
-    sf::Vector3f maxs{FLT_MAX, FLT_MAX, FLT_MAX};
+void calc_model_size(const Model3D &model, glm::vec3 &mins, glm::vec3 &maxs) {
+    maxs = glm::vec3{-FLT_MAX, -FLT_MAX, -FLT_MAX};
+    mins = glm::vec3{FLT_MAX, FLT_MAX, FLT_MAX};
     for (auto vtx = model.beginVertices(); vtx != model.endVertices(); ++vtx) {
-        mins.x = std::max(mins.x, vtx->x);
-        mins.y = std::max(mins.y, vtx->y);
-        mins.z = std::max(mins.z, vtx->z);
-        maxs.x = std::min(maxs.x, vtx->x);
-        maxs.y = std::min(maxs.y, vtx->y);
-        maxs.z = std::min(maxs.z, vtx->z);
+        glm::vec3 vec = glm_vec(*vtx);
+        mins = glm::min(mins, vec);
+        maxs = glm::max(maxs, vec);
     }
-    center = (mins + maxs) / 2.f;
-    const sf::Vector3f sz = (maxs - mins) / 2.f;
-    factor = static_cast<float>(resolution) / std::max(std::max(std::abs(sz.x), std::abs(sz.y)), std::abs(sz.z)) / 2.f *
-             0.7f;
 }
 
 const char *previews[] = {
@@ -135,18 +133,22 @@ int main() {
     }
 
     Model3D current_model;
-    sf::Vector3f model_center{};
-    float model_scale = 0;
+    glm::mat4 transform_matrix = glm::ortho(-1.f, 1.f, -1.f, 1.f);
 
     ImGuiIO &io = ImGui::GetIO();
     SetOptimalFontSize(io, desktop);
 
-    int resolution = 16;
-    sgl::SFMLImage image(sf::Vector2u(resolution, resolution), sf::Color::Black);
+    int resolution = 128;
+
+    sf::Texture texture(sf::Vector2u{(uint32_t)resolution, (uint32_t)resolution});
+    sf::Sprite sprite(texture);
+    sgl::ColorTexture diffuseColor(resolution, resolution);
+
     sgl::DebugView debugView(sf::Vector2f(windowSize), 0.05f);
 
     sf::Clock deltaClock;
-    //sf::Clock perfClock;
+    sf::Clock timeClock;
+    timeClock.start();
     //sf::Time perfTime;
     while (window.isOpen()) {
         while (const auto event = window.pollEvent()) {
@@ -180,52 +182,51 @@ int main() {
         ImGui::SeparatorText("Render");
         if (ImGui::DragInt("Resolution", &resolution, 1.f, 16, 512)) {
             if (resolution > 0 && resolution <= 4096) {
-                image.resize(sf::Vector2u(resolution, resolution));
-                calc_model_scale(current_model, model_center, model_scale, resolution);
+                texture.resize(sf::Vector2u(resolution, resolution));
+                diffuseColor.resize(resolution, resolution);
+                sprite.setTexture(texture, true);
+                //image.resize(sf::Vector2u(resolution, resolution));
+                //calc_model_scale(current_model, model_center, model_scale, resolution);
             }
         }
 
         ImGui::SeparatorText("Lab 2");
 
-        static int current_preview = 0;
-
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
-
-
-        ImGui::Spacing();
-
-        ImGui::SeparatorText("Image");
-
-        static char filename[255]{};
-        ImGui::InputText("File", filename, 255, ImGuiInputTextFlags_CharsNoBlank);
-        if (ImGui::Button("Save As")) {
-            NFD::UniquePath outPath;
-            nfdfilteritem_t filterItem[1] = {{"Image/png", "png"}};
-
-            nfdresult_t save_result = NFD::SaveDialog(outPath, filterItem, 1, nullptr, "test.png");
-
-            if (save_result == NFD_OKAY) {
-                strncpy(filename, outPath.get(), 255);
-                image.saveToFile(std::string(filename));
-            }
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Save")) {
-            image.saveToFile(std::string(filename) + ".png");
+        if (model_selector(current_model)) {
+            glm::vec3 mins, maxs;
+            calc_model_size(current_model, mins, maxs);
+            printf("%f %f %f\n", mins.x, mins.y, mins.z);
+            printf("%f %f %f\n", maxs.x, maxs.y, maxs.z);
+            mins *= 1.3f;
+            maxs *= 1.3f;
+            transform_matrix = glm::ortho(mins.x, maxs.x, mins.y, maxs.y);
+            //calc_model_scale(current_model, model_center, model_scale, resolution);
         }
 
         ImGui::End();
+
+        glm::mat4 rot = glm::rotate(glm::mat4(1.f), glm::radians(timeClock.getElapsedTime().asSeconds() * 10), glm::vec3(0,1,0));
+        glm::mat4 flip = glm::scale(glm::mat4(1.f), glm::vec3(1,1,1));
+
+        glm::mat4 mv = transform_matrix * rot * flip;
+
+        diffuseColor.clear(0xff090909u);
+        for (auto poly = current_model.beginPolygons(); current_model.endPolygons() != poly; ++poly) {
+            int index = poly - current_model.beginPolygons();
+            srand(index*1234);
+            sgl::render::drawTriangleTransform(diffuseColor, mv, glm_vec(poly.getVertex(0)), glm_vec(poly.getVertex(1)), glm_vec(poly.getVertex(2)), sf::Color(rand(), rand(), rand()));
+        }
 
         /*perfClock.restart();
         draw(image, mainClock.getElapsedTime().asMilliseconds());
         perfTime = perfClock.getElapsedTime();*/
 
+        diffuseColor.drawTo(texture);
+
         window.setView(debugView.getView());
 
         window.clear();
-        window.draw(image);
+        window.draw(sprite);
         ImGui::SFML::Render(window);
         window.display();
     }

@@ -50,6 +50,8 @@ public:
             return tmp;
         }
 
+        difference_type operator-(const PolyIterator&a) { return a.m_ptr - m_ptr; };
+
         friend bool operator==(const PolyIterator&a, const PolyIterator&b) { return a.m_ptr == b.m_ptr; };
         friend bool operator!=(const PolyIterator&a, const PolyIterator&b) { return a.m_ptr != b.m_ptr; };
 
