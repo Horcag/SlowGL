@@ -56,27 +56,8 @@ FetchContent_Declare(
         GIT_TAG bf71a834948186f4097caa076cd2663c69a10e1e #refs/tags/1.0.1
 )
 FetchContent_MakeAvailable(glm)
-include_directories(${CMAKE_SOURCE_DIR}/external/glm)
 
-add_library(SlowGL ${sources}
-        src/Render/triangles.cpp
-        src/Render/triangles.h
-        src/Core/IModule.h
-        src/Core/ModuleManager.h
-        src/Core/ModuleManager.cpp
-        src/Modules/Lab1/Lab1Module.h
-        src/Modules/Lab1/Lab1Module.cpp
-        src/Utility/FileUtils.h
-        src/Utility/FileUtils.cpp
-        src/Modules/Lab2/Lab2Module.h
-        src/Modules/Lab2/Lab2Module.cpp
-        src/Texture/sgl_textures.h
-        src/Texture/sgl_textures.cpp
-)
-
-# Копируем шрифты в выходную директорию
-file(COPY ${CMAKE_SOURCE_DIR}/fonts DESTINATION ${CMAKE_BINARY_DIR}/bin)
-
+add_library(SlowGL ${sources})
 
 # Добавляем пути для include
 include_directories(
@@ -89,12 +70,13 @@ include_directories(
 )
 
 # Привязываем библиотеки к SlowGL
-target_link_libraries(SlowGL PRIVATE sfml-graphics ImGui-SFML::ImGui-SFML)
+# TODO: nfd не нужен в библиотеке 
+target_link_libraries(SlowGL PRIVATE sfml-graphics ImGui-SFML::ImGui-SFML nfd glm::glm)
 target_compile_features(SlowGL PRIVATE cxx_std_17)
 
 # Добавляем исполняемый файл
 add_executable(SlowGLApp src/main.cpp)
-target_link_libraries(SlowGLApp PRIVATE SlowGL sfml-graphics ImGui-SFML::ImGui-SFML nfd glm)
+target_link_libraries(SlowGLApp PRIVATE SlowGL sfml-graphics ImGui-SFML::ImGui-SFML nfd glm::glm)
 target_compile_features(SlowGLApp PRIVATE cxx_std_17)
 
 # Add examples
