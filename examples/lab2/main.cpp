@@ -65,6 +65,19 @@ bool model_select(char *filename) {
     return false;
 }
 
+void decompose_model(std::vector<glm::vec3>& vertexes, std::vector<glm::uvec3>& indices, const Model3D& model){
+    const auto& model_vtx = model.get_vertex();
+    vertexes.resize(model_vtx.size());
+    for(size_t i = 0; i < model_vtx.size(); i++){
+        vertexes[i] = glm_vec(model_vtx[i]);
+    }
+    const auto& model_faces = model.get_faces();
+    indices.resize(model_faces.size());
+    for(size_t i = 0; i < model_faces.size(); i++){
+        indices[i] = glm_ivec(model_faces[i].vertexIndices);
+    }
+}
+
 bool model_selector(Model3D &model) {
     static OBJParser parser;
     static char filename[255]{};
@@ -133,6 +146,8 @@ int main() {
     }
 
     Model3D current_model;
+    std::vector<glm::vec3> model_vtx;
+    std::vector<glm::uvec3> model_vtx_indices;
     glm::mat4 transform_matrix = glm::ortho(-1.f, 1.f, -1.f, 1.f);
 
     ImGuiIO &io = ImGui::GetIO();
@@ -143,6 +158,7 @@ int main() {
     sf::Texture texture(sf::Vector2u{(uint32_t)resolution, (uint32_t)resolution});
     sf::Sprite sprite(texture);
     sgl::ColorTexture diffuseColor(resolution, resolution);
+    sgl::DepthTexture depthTexture(resolution, resolution);
 
     sgl::DebugView debugView(sf::Vector2f(windowSize), 0.05f);
 
@@ -184,6 +200,7 @@ int main() {
             if (resolution > 0 && resolution <= 4096) {
                 texture.resize(sf::Vector2u(resolution, resolution));
                 diffuseColor.resize(resolution, resolution);
+                depthTexture.resize(resolution, resolution);
                 sprite.setTexture(texture, true);
                 //image.resize(sf::Vector2u(resolution, resolution));
                 //calc_model_scale(current_model, model_center, model_scale, resolution);
@@ -200,22 +217,25 @@ int main() {
             mins *= 1.3f;
             maxs *= 1.3f;
             transform_matrix = glm::ortho(mins.x, maxs.x, mins.y, maxs.y);
+            decompose_model(model_vtx, model_vtx_indices, current_model);
             //calc_model_scale(current_model, model_center, model_scale, resolution);
         }
 
         ImGui::End();
 
         glm::mat4 rot = glm::rotate(glm::mat4(1.f), glm::radians(timeClock.getElapsedTime().asSeconds() * 10), glm::vec3(0,1,0));
-        glm::mat4 flip = glm::scale(glm::mat4(1.f), glm::vec3(1,1,1));
+        glm::mat4 translate = glm::translate(glm::mat4(1.f), glm::vec3(100,0,0));
 
-        glm::mat4 mv = transform_matrix * rot * flip;
+        glm::mat4 mv = transform_matrix * rot;
 
         diffuseColor.clear(0xff090909u);
-        for (auto poly = current_model.beginPolygons(); current_model.endPolygons() != poly; ++poly) {
+        sgl::render::drawTrianglesZBuffer(diffuseColor, depthTexture, mv, model_vtx, model_vtx_indices);
+        /*for (auto poly = current_model.beginPolygons(); current_model.endPolygons() != poly; ++poly) {
             int index = poly - current_model.beginPolygons();
             srand(index*1234);
-            sgl::render::drawTriangleTransform(diffuseColor, mv, glm_vec(poly.getVertex(0)), glm_vec(poly.getVertex(1)), glm_vec(poly.getVertex(2)), sf::Color(rand(), rand(), rand()));
-        }
+            sgl::render::drawModelTriangles();
+            //sgl::render::drawTriangleTransform(diffuseColor, mv, glm_vec(poly.getVertex(0)), glm_vec(poly.getVertex(1)), glm_vec(poly.getVertex(2)), sf::Color(rand(), rand(), rand()));
+        }*/
 
         /*perfClock.restart();
         draw(image, mainClock.getElapsedTime().asMilliseconds());

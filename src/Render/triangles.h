@@ -42,5 +42,8 @@ namespace sgl::render {
 
 
     void drawTriangleTransform(sgl::ColorTexture& target, const glm::mat4 transform, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, sf::Color color);
+
+    void drawTrianglesBuffer(sgl::ColorTexture& target, const glm::mat4 transform, const std::vector<glm::vec3> vertex, const std::vector<glm::uvec3> indices);
+    void drawTrianglesZBuffer(sgl::ColorTexture & target, sgl::DepthTexture& depth, const glm::mat4 transform, const std::vector<glm::vec3> vertex, const std::vector<glm::uvec3> indices);
 }
 #endif //TRIANGLES_H
