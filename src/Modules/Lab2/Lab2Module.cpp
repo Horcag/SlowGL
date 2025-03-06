@@ -8,6 +8,9 @@
 #include <random>
 #include <vector>
 #include <future>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace sgl {
     Lab2Module::Lab2Module() {
@@ -35,12 +38,19 @@ namespace sgl {
                 const float angle = m_animationTime + (0.5f + static_cast<float>(i) * 0.2f);
                 const float radius = 100.0f + static_cast<float>(i) * 20.0f;
 
-                const sf::Vector2f center(256.0f, 256.0f); // Центр изображения
+                constexpr sf::Vector2f center(256.0f, 256.0f); // Центр изображения
                 m_triangles[i].v0 = center + sf::Vector2f(std::cos(angle) * radius, std::sin(angle) * radius);
                 m_triangles[i].v1 = center + sf::Vector2f(std::cos(angle + 2.0f) * radius * 0.7f,
                                                           std::sin(angle + 2.0f) * radius * 0.7f);
                 m_triangles[i].v2 = center + sf::Vector2f(std::cos(angle + 4.0f) * radius * 0.5f,
                                                           std::sin(angle + 4.0f) * radius * 0.5f);
+            }
+        }
+
+        if (m_animateModel) {
+            m_rotationX += 45.0f * deltaTime;
+            if (m_rotationX >= 360.0f) {
+                m_rotationX -= 360.0f;
             }
         }
     }
@@ -145,7 +155,18 @@ namespace sgl {
                 }
                 break;
         }
+        if (m_currentPreview >= PreviewMode::ModelPolygons) {
+            ImGui::SeparatorText("Вращение модели");
+            ImGui::SliderFloat("Поворот X", &m_rotationX, 0.0f, 360.0f);
+            ImGui::SliderFloat("Поворот Y", &m_rotationY, 0.0f, 360.0f);
+            ImGui::SliderFloat("Поворот Z", &m_rotationZ, 0.0f, 360.0f);
 
+            if (ImGui::Button("Сбросить вращение")) {
+                m_rotationX = m_rotationY = m_rotationZ = 0.0f;
+            }
+
+            ImGui::Checkbox("Автоматическое вращение", &m_animateModel);
+        }
         ImGui::Spacing();
         ImGui::SeparatorText("Изображение");
 
@@ -215,124 +236,106 @@ namespace sgl {
 
     void Lab2Module::drawTriangle(sgl::SFMLImage&image, const int index) const {
         if (m_triangles.empty() || index < 0 || index >= static_cast<int>(m_triangles.size())) return;
-        const Triangle&tri = m_triangles[0];
+        const Triangle&tri = m_triangles[index];
         render::drawTriangle(image, tri.v0, tri.v1, tri.v2, tri.color);
     }
 
+
     void Lab2Module::drawModelPolygons(sgl::SFMLImage&image, bool useLight, bool useZBuffer) const {
+        image.clear();
         const int resolution = image.getSize().x;
-        sf::Vector3f resol(resolution / 2, resolution / 2, resolution / 2);
+        const sf::Vector3f resolutionCenter(resolution / 2.0f, resolution / 2.0f, resolution / 2.0f);
 
-        std::vector<sf::Vector3f> transformed_vertices;
-        transformed_vertices.reserve(m_currentModel.get_vertex().size());
-
-        // Преобразование вершин
-        for (auto vtx = m_currentModel.beginVertices(); vtx != m_currentModel.endVertices(); ++vtx) {
-            transformed_vertices.push_back((*vtx - m_modelCenter) * m_modelScale + resol);
-        }
-
-        // Z-буфер
         std::vector<float> zBuffer;
         if (useZBuffer) {
-            zBuffer.resize(resolution * resolution, std::numeric_limits<float>::lowest());
+            zBuffer.assign(resolution * resolution, std::numeric_limits<float>::max());
         }
 
-        // Отрисовка полигонов
+        // Рассчитываем вершины с учётом вращения
+        std::vector<sf::Vector3f> transformedVertices;
+        transformedVertices.reserve(m_currentModel.get_vertex().size());
+
+        // Подготавливаем вершины модели
+        for (auto vtx = m_currentModel.beginVertices(); vtx != m_currentModel.endVertices(); ++vtx) {
+            // Сначала смещаем относительно центра модели
+            sf::Vector3f centered = *vtx - m_modelCenter;
+
+            // Применяем масштабирование
+            sf::Vector3f scaled = centered * m_modelScale;
+
+            // Применяем вращение
+            sf::Vector3f transformed = applyRotation(scaled + resolutionCenter);
+
+            transformedVertices.push_back(transformed);
+        }
+
+        // Отрисовываем полигоны
         for (auto poly = m_currentModel.beginPolygons(); poly != m_currentModel.endPolygons(); ++poly) {
-            const sf::Vector3f&v1 = transformed_vertices[(&poly->vertexIndices.x)[0]];
-            const sf::Vector3f&v2 = transformed_vertices[(&poly->vertexIndices.x)[1]];
-            const sf::Vector3f&v3 = transformed_vertices[(&poly->vertexIndices.x)[2]];
+            const sf::Vector3f&v1 = transformedVertices[poly->vertexIndices.x];
+            const sf::Vector3f&v2 = transformedVertices[poly->vertexIndices.y];
+            const sf::Vector3f&v3 = transformedVertices[poly->vertexIndices.z];
 
-            sf::Color color = sf::Color::Green;
-
+            sf::Vector3f normal = calculateNormal(v1, v2, v3);
+            // Определяем цвет полигона
+            sf::Color color;
             if (useLight) {
-                // Вычисление нормали к полигону
-                sf::Vector3f normal = calculateNormal(v1, v2, v3);
-
-                // Вычисление интенсивности освещения
                 float intensity = calculateLightCosine(normal, m_lightDirection);
 
-                // Ограничение интенсивности
-                intensity = std::max(0.2f, intensity);
-
-                // Применение интенсивности к цвету
-                color.r = static_cast<uint8_t>(color.r * intensity);
-                color.g = static_cast<uint8_t>(color.g * intensity);
-                color.b = static_cast<uint8_t>(color.b * intensity);
+                if (intensity >= 0) {
+                    continue;
+                }
+                intensity = std::abs(intensity);
+                intensity = std::max(0.2f, intensity); // минимальное освещение
+                color = sf::Color(255 * intensity, 255 * intensity, 255 * intensity);
+            }
+            else {
+                // Если не используем освещение, генерируем случайный цвет на основе индекса полигона
+                color = sf::Color(
+                    (poly->vertexIndices.x * 73) % 200 + 55,
+                    (poly->vertexIndices.y * 47) % 200 + 55,
+                    (poly->vertexIndices.z * 13) % 200 + 55
+                );
             }
 
-            // Отрисовка полигона
-            sf::Vector2f v2d1(v1.x, v1.y);
-            sf::Vector2f v2d2(v2.x, v2.y);
-            sf::Vector2f v2d3(v3.x, v3.y);
-
             if (useZBuffer) {
-                // Реализация отрисовки с Z-буфером
-                float xmin = std::min({v2d1.x, v2d2.x, v2d3.x});
-                float xmax = std::max({v2d1.x, v2d2.x, v2d3.x});
-                float ymin = std::min({v2d1.y, v2d2.y, v2d3.y});
-                float ymax = std::max({v2d1.y, v2d2.y, v2d3.y});
-
-                // Проверка границ изображения
-                xmin = std::max(0.0f, xmin);
-                ymin = std::max(0.0f, ymin);
-                xmax = std::min(static_cast<float>(resolution - 1), xmax);
-                ymax = std::min(static_cast<float>(resolution - 1), ymax);
-
-                for (int x = static_cast<int>(xmin); x <= static_cast<int>(xmax); ++x) {
-                    for (int y = static_cast<int>(ymin); y <= static_cast<int>(ymax); ++y) {
-                        sf::Vector3f bc = render::barycentric({x, y}, v2d1, v2d2, v2d3);
-
-                        if (bc.x >= 0 && bc.y >= 0 && bc.z >= 0) {
-                            // Интерполяция z-координаты
-                            float z = v1.z * bc.x + v2.z * bc.y + v3.z * bc.z;
-
-                            int bufferIndex = y * resolution + x;
-                            if (bufferIndex >= 0 && bufferIndex < static_cast<int>(zBuffer.size()) && z > zBuffer[
-                                    bufferIndex]) {
-                                zBuffer[bufferIndex] = z;
-                                image.setPixel({static_cast<unsigned>(x), static_cast<unsigned>(y)}, color);
-                            }
-                        }
-                    }
-                }
+                drawTriangleWithZBuffer(image, v1, v2, v3, color, zBuffer, resolution);
             }
             else {
                 // Обычная отрисовка треугольника
-                render::drawTriangle(image, v2d1, v2d2, v2d3, color);
+                sf::Vector2f p1(v1.x, v1.y);
+                sf::Vector2f p2(v2.x, v2.y);
+                sf::Vector2f p3(v3.x, v3.y);
+                sgl::render::drawTriangle(image, p1, p2, p3, color);
             }
         }
     }
 
     void Lab2Module::generateTriangles(const int count) {
         m_triangles.clear();
-        m_triangles.reserve(count);
+
+        // Получаем размер изображения для корректной генерации координат
+        const int resolution = m_imageRef ? m_imageRef->getSize().x : 512;
+        const float padding = static_cast<float>(resolution) * 0.1f; // отступ от краев
 
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::uniform_real_distribution<float> distX(50.0f, 462.0f);
-        std::uniform_real_distribution<float> distY(50.0f, 462.0f);
-        std::uniform_int_distribution<int> distSize(20.0f, 100.0f);
+        std::uniform_real_distribution<float> dist(padding, resolution - padding);
 
         for (int i = 0; i < count; ++i) {
             Triangle tri;
-            const float centerX = distX(gen);
-            const float centerY = distY(gen);
-            const float size = distSize(gen);
 
-            tri.v0 = sf::Vector2f(centerX, centerY - size);
-            tri.v1 = sf::Vector2f(centerX - size * 0.866f, centerY + size * 0.5f);
-            tri.v2 = sf::Vector2f(centerX + size * 0.866f, centerY + size * 0.5f);
+            tri.v0 = sf::Vector2f(dist(gen), dist(gen));
+            tri.v1 = sf::Vector2f(dist(gen), dist(gen));
+            tri.v2 = sf::Vector2f(dist(gen), dist(gen));
             tri.color = getRandomColor();
-
             m_triangles.push_back(tri);
         }
-        m_animationTime = 0.0f;
+        m_activeTriangleIndex = m_triangles.empty() ? 0 : 0;
     }
 
     sf::Color Lab2Module::getRandomColor() {
-        std::random_device rd;
-        std::mt19937 gen(rd());
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
         std::uniform_int_distribution<> dist(50, 255);
 
         return {
@@ -352,7 +355,8 @@ namespace sgl {
         normal.z = edge1.x * edge2.y - edge1.y * edge2.x;
 
         // Нормализация
-        if (float length = std::sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z); length > 0) {
+        if (const float length = std::sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+            length > 0) {
             normal.x /= length;
             normal.y /= length;
             normal.z /= length;
@@ -363,5 +367,75 @@ namespace sgl {
 
     float Lab2Module::calculateLightCosine(const sf::Vector3f&normal, const sf::Vector3f&light) {
         return normal.x * light.x + normal.y * light.y + normal.z * light.z;
+    }
+
+    sf::Vector3f Lab2Module::applyRotation(const sf::Vector3f&point) const {
+        const int resolution = m_imageRef->getSize().x;
+        // Создаем единичную матрицу
+        glm::mat4 rotationMatrix = glm::mat4(1.0f);
+
+        // Центр вращения - это центр экрана
+        glm::vec3 center(resolution / 2.0f, resolution / 2.0f, resolution / 2.0f);
+
+        // Смещаем к началу координат
+        glm::mat4 translateToOrigin = glm::translate(glm::mat4(1.0f), -center);
+
+        // Поворачиваем вокруг осей (радианы)
+        glm::mat4 rotateX = glm::rotate(glm::mat4(1.0f), glm::radians(m_rotationX), glm::vec3(1.0f, 0.0f, 0.0f));
+        glm::mat4 rotateY = glm::rotate(glm::mat4(1.0f), glm::radians(m_rotationY), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 rotateZ = glm::rotate(glm::mat4(1.0f), glm::radians(m_rotationZ), glm::vec3(0.0f, 0.0f, 1.0f));
+
+        // Смещаем обратно
+        glm::mat4 translateBack = glm::translate(glm::mat4(1.0f), center);
+
+        // Комбинируем матрицы
+        rotationMatrix = translateBack * rotateZ * rotateY * rotateX * translateToOrigin;
+
+        // Применяем трансформацию к точке
+        glm::vec4 glmPoint(point.x, point.y, point.z, 1.0f);
+        glm::vec4 transformed = rotationMatrix * glmPoint;
+
+        return sf::Vector3f(transformed.x, transformed.y, transformed.z);
+    }
+
+
+    void Lab2Module::drawTriangleWithZBuffer(SFMLImage&image, const sf::Vector3f&v0,
+                                             const sf::Vector3f&v1, const sf::Vector3f&v2, const sf::Color&color,
+                                             std::vector<float>&zBuffer,
+                                             int resolution) {
+        int minX = std::max(0, static_cast<int>(std::min({v0.x, v1.x, v2.x})));
+        int maxX = std::min(resolution - 1, static_cast<int>(std::max({v0.x, v1.x, v2.x})));
+        int minY = std::max(0, static_cast<int>(std::min({v0.y, v1.y, v2.y})));
+        int maxY = std::min(resolution - 1, static_cast<int>(std::max({v0.y, v1.y, v2.y})));
+
+        // Обходим все пиксели в ограничивающем прямоугольнике
+        for (int y = minY; y <= maxY; ++y) {
+            for (int x = minX; x <= maxX; ++x) {
+                sf::Vector2i point(x, y);
+
+                const sf::Vector3f bary = sgl::render::barycentric(
+                    point,
+                    sf::Vector2f(v0.x, v0.y),
+                    sf::Vector2f(v1.x, v1.y),
+                    sf::Vector2f(v2.x, v2.y)
+                );
+
+                const float lambda0 = bary.x;
+                const float lambda1 = bary.y;
+                const float lambda2 = bary.z;
+
+
+                // Проверяем, находится ли точка внутри треугольника
+                if (lambda0 >= 0 && lambda1 >= 0 && lambda2 >= 0) {
+                    float z = lambda0 * v0.z + lambda1 * v1.z + lambda2 * v2.z;
+
+                    int index = y * resolution + x;
+                    if (z < zBuffer[index]) {
+                        zBuffer[index] = z;
+                        image.setPixel({static_cast<unsigned int>(x), static_cast<unsigned int>(y)}, color);
+                    }
+                }
+            }
+        }
     }
 }

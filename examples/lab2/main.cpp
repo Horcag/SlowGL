@@ -3,7 +3,6 @@
 #include "imgui-SFML.h" // for ImGui::SFML::* functions and SFML-specific overloads
 
 #include <SFML/Graphics.hpp>
-#include "render/lines.h"
 #include "Image/SFMLImage.h"
 #include "Debug/DebugView.h"
 #include "Inter-VariableFont.h"
@@ -23,7 +22,7 @@
 #include "Utility/glm_converters.h"
 #include "Render/triangles.h"
 
-void draw(sgl::SFMLImage &image, int64_t time) {
+void draw(sgl::SFMLImage&image, int64_t time) {
     image.clear();
     for (unsigned int i = 0; i < image.getSize().x; i++) {
         for (unsigned int j = 0; j < image.getSize().y; j++) {
@@ -34,9 +33,9 @@ void draw(sgl::SFMLImage &image, int64_t time) {
 }
 
 // Функция для предварительного вычисления трансформаций вершин
-inline std::vector<sf::Vector3f> compute_transformed_vertices(const Model3D &model, const sf::Vector3f &center,
+inline std::vector<sf::Vector3f> compute_transformed_vertices(const Model3D&model, const sf::Vector3f&center,
                                                               const float scale,
-                                                              const sf::Vector3f &resol) {
+                                                              const sf::Vector3f&resol) {
     std::vector<sf::Vector3f> transformed_vertices;
     transformed_vertices.reserve(model.get_vertex().size());
     for (auto vtx = model.beginVertices(); vtx != model.endVertices(); ++vtx) {
@@ -46,7 +45,7 @@ inline std::vector<sf::Vector3f> compute_transformed_vertices(const Model3D &mod
 }
 
 
-bool model_select(char *filename) {
+bool model_select(char* filename) {
     ImGui::InputText("3D model", filename, 255, ImGuiInputTextFlags_CharsNoBlank);
     if (ImGui::Button("Select file")) {
         NFD::UniquePath outPath;
@@ -90,7 +89,7 @@ bool model_selector(Model3D &model) {
     return false;
 }
 
-void calc_model_size(const Model3D &model, glm::vec3 &mins, glm::vec3 &maxs) {
+void calc_model_size(const Model3D&model, glm::vec3&mins, glm::vec3&maxs) {
     maxs = glm::vec3{-FLT_MAX, -FLT_MAX, -FLT_MAX};
     mins = glm::vec3{FLT_MAX, FLT_MAX, FLT_MAX};
     for (auto vtx = model.beginVertices(); vtx != model.endVertices(); ++vtx) {
@@ -100,13 +99,13 @@ void calc_model_size(const Model3D &model, glm::vec3 &mins, glm::vec3 &maxs) {
     }
 }
 
-const char *previews[] = {
+const char* previews[] = {
     "1. Image manipulation", "2. Straight lines", "3. 3D Model", "4. 3D Model vertices", "5. 3D Model (Polygons)",
     "6. 3D Model edges"
 };
 
 // Функция для установки оптимального размера шрифта
-void SetOptimalFontSize(const ImGuiIO &io, const sf::VideoMode &desktop) {
+void SetOptimalFontSize(const ImGuiIO&io, const sf::VideoMode&desktop) {
     constexpr float baseFontSize = 18.0f; // Базовый размер шрифта
     const float scaleFactor = std::min(static_cast<float>(desktop.size.x) / 1920.0f,
                                        static_cast<float>(desktop.size.y) / 1080.0f);
@@ -117,7 +116,7 @@ void SetOptimalFontSize(const ImGuiIO &io, const sf::VideoMode &desktop) {
 
     // Загрузка шрифта с новым размером
     io.Fonts->Clear();
-    const ImFont *font = io.Fonts->AddFontFromMemoryTTF(
+    const ImFont* font = io.Fonts->AddFontFromMemoryTTF(
         Inter_VariableFont_opsz_wght_ttf,
         Inter_VariableFont_opsz_wght_ttf_len,
         fontSize,
@@ -150,7 +149,7 @@ int main() {
     std::vector<glm::uvec3> model_vtx_indices;
     glm::mat4 transform_matrix = glm::ortho(-1.f, 1.f, -1.f, 1.f);
 
-    ImGuiIO &io = ImGui::GetIO();
+    ImGuiIO&io = ImGui::GetIO();
     SetOptimalFontSize(io, desktop);
 
     int resolution = 128;
@@ -172,7 +171,7 @@ int main() {
 
             if (event->is<sf::Event::Closed>())
                 window.close();
-            else if (const auto *resized = event->getIf<sf::Event::Resized>())
+            else if (const auto* resized = event->getIf<sf::Event::Resized>())
                 windowSize = resized->size;
             if (!ImGui::GetIO().WantCaptureMouse && event.has_value()) {
                 debugView.ProcessEvent(event.value());
