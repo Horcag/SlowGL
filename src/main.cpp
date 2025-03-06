@@ -65,7 +65,7 @@ int main() {
     sgl::ModuleManager moduleManager;
 
     // Регистрация модулей
-    moduleManager.registerModule(std::make_unique<sgl::Lab1Module>());
+    // moduleManager.registerModule(std::make_unique<sgl::Lab1Module>()); // Отключаем первый модуль
     moduleManager.registerModule(std::make_unique<sgl::Lab2Module>());
 
     sf::Clock deltaClock;

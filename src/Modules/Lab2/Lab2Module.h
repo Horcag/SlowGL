@@ -5,6 +5,9 @@
 #include "Parsers/OBJParser/OBJParser.h"
 #include "Image/SFMLImage.h"
 #include <string>
+#include <algorithm>
+
+#include "Render/triangles.h"
 
 
 namespace sgl {
@@ -75,5 +78,21 @@ namespace sgl {
         sf::Vector3f m_lightDirection = {0.0f, 0.0f, 1.0f};
 
         SFMLImage* m_imageRef = nullptr;
+
+        float m_rotationX = 0.0f;
+        float m_rotationY = 0.0f;
+        float m_rotationZ = 0.0f;
+        bool m_animateModel = false;
+
+
+        [[nodiscard]] sf::Vector3f applyRotation(const sf::Vector3f&point) const;
+
+        static void drawTriangleWithZBuffer(sgl::SFMLImage&image,
+                                            const sf::Vector3f&v0,
+                                            const sf::Vector3f&v1,
+                                            const sf::Vector3f&v2,
+                                            const sf::Color&color,
+                                            std::vector<float>&zBuffer,
+                                            int resolution);
     };
 }
