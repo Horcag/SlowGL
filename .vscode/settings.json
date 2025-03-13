@@ -85,6 +85,9 @@
         "xtree": "cpp",
         "xutility": "cpp",
         "future": "cpp",
-        "cstdarg": "cpp"
+        "cstdarg": "cpp",
+        "complex": "cpp",
+        "numeric": "cpp",
+        "semaphore": "cpp"
     }
 }

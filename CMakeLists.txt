@@ -21,6 +21,13 @@ FetchContent_Declare(SFML
         SYSTEM)
 FetchContent_MakeAvailable(SFML)
 
+FetchContent_Declare(
+        glew
+        GIT_REPOSITORY https://github.com/Perlmint/glew-cmake.git
+        GIT_TAG        origin/master
+)
+FetchContent_MakeAvailable(glew)
+
 # Fetch nfd для диалогов выбора файлов
 FetchContent_Declare(nfd
         GIT_REPOSITORY https://github.com/btzy/nativefiledialog-extended.git
@@ -71,7 +78,7 @@ include_directories(
 
 # Привязываем библиотеки к SlowGL
 # TODO: nfd не нужен в библиотеке 
-target_link_libraries(SlowGL PRIVATE sfml-graphics ImGui-SFML::ImGui-SFML nfd glm::glm)
+target_link_libraries(SlowGL PRIVATE sfml-graphics ImGui-SFML::ImGui-SFML nfd glm::glm libglew_static)
 target_compile_features(SlowGL PRIVATE cxx_std_17)
 
 # Добавляем исполняемый файл
