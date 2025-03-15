@@ -21,6 +21,9 @@
 #include <glm/common.hpp>
 #include "Utility/glm_converters.h"
 #include "Render/triangles.h"
+#include <iostream>
+#include <gl/glew.h>
+#include "Surface/BaseSurface.h"
 
 void draw(sgl::SFMLImage&image, int64_t time) {
     image.clear();
@@ -132,6 +135,28 @@ void SetOptimalFontSize(const ImGuiIO&io, const sf::VideoMode&desktop) {
     }
 }
 
+void drawTrianglesBuffer(sgl::BaseSurface& target, const glm::mat4 transform, const std::vector<glm::vec3> vertex, const std::vector<glm::uvec3> indices)
+{
+    glm::vec2 image_size = target.getSize();
+    static std::vector<glm::vec2> transformed;
+    transformed.resize(vertex.size());
+    for(size_t i = 0; i < vertex.size(); i++){
+        transformed[i] = (glm::vec2(transform * glm::vec4(vertex[i], 1.f)) + glm::vec2(1.f, 1.f)) * image_size / 2.f;
+        //target.setPixel(*transformed, sf::Color::Blue);
+    }
+    
+    for(size_t i= 0; i < indices.size(); i++){
+        const glm::uvec3 index = indices[i];
+        const glm::vec2 v0t = transformed[index.x];
+        const glm::vec2 v1t = transformed[index.y];
+        const glm::vec2 v2t = transformed[index.z];
+        
+        target.drawLine(v0t, v1t, sf::Color::Red);
+        target.drawLine(v1t, v2t, sf::Color::Green);
+        target.drawLine(v0t, v2t, sf::Color::Blue);
+    }
+}
+
 int main() {
     NFD::Guard nfdGuard;
 
@@ -144,6 +169,15 @@ int main() {
         return -1;
     }
 
+    glewInit();
+
+    /*sf::ContextSettings settings = window.getSettings();
+
+    std::cout << "depth bits:" << settings.depthBits << std::endl;
+    std::cout << "stencil bits:" << settings.stencilBits << std::endl;
+    //std::cout << "antialiasing level:" << settings.antialiasingLevel << std::endl;
+    std::cout << "version:" << settings.majorVersion << "." << settings.minorVersion << std::endl;*/
+
     Model3D current_model;
     std::vector<glm::vec3> model_vtx;
     std::vector<glm::uvec3> model_vtx_indices;
@@ -154,8 +188,10 @@ int main() {
 
     int resolution = 128;
 
-    sf::Texture texture(sf::Vector2u{(uint32_t)resolution, (uint32_t)resolution});
-    sf::Sprite sprite(texture);
+    sgl::BaseSurface surface(resolution, resolution);
+
+    //sf::Texture texture(sf::Vector2u{(uint32_t)resolution, (uint32_t)resolution});
+    sf::Sprite sprite(surface.getTexture());
     sgl::ColorTexture diffuseColor(resolution, resolution);
     sgl::DepthTexture depthTexture(resolution, resolution);
 
@@ -196,11 +232,13 @@ int main() {
         if (ImGui::Button("+")) debugView.Zoom(0.5f);
         ImGui::SeparatorText("Render");
         if (ImGui::DragInt("Resolution", &resolution, 1.f, 16, 512)) {
-            if (resolution > 0 && resolution <= 4096) {
-                texture.resize(sf::Vector2u(resolution, resolution));
+            if (resolution > 0 && resolution <= 8192) {
+                //texture.resize(sf::Vector2u(resolution, resolution));
+                surface.resize(resolution, resolution);
                 diffuseColor.resize(resolution, resolution);
                 depthTexture.resize(resolution, resolution);
-                sprite.setTexture(texture, true);
+                sprite.setTexture(surface.getTexture(), true);
+                //sprite.setTexture(texture, true);
                 //image.resize(sf::Vector2u(resolution, resolution));
                 //calc_model_scale(current_model, model_center, model_scale, resolution);
             }
@@ -222,25 +260,20 @@ int main() {
 
         ImGui::End();
 
-        glm::mat4 rot = glm::rotate(glm::mat4(1.f), glm::radians(timeClock.getElapsedTime().asSeconds() * 10), glm::vec3(0,1,0));
+        surface.clear(sf::Color::Black);
+
+        drawTrianglesBuffer(surface, transform_matrix, model_vtx, model_vtx_indices);
+        surface.flush();
+
+        /*glm::mat4 rot = glm::rotate(glm::mat4(1.f), glm::radians(timeClock.getElapsedTime().asSeconds() * 10), glm::vec3(0,1,0));
         glm::mat4 translate = glm::translate(glm::mat4(1.f), glm::vec3(100,0,0));
 
         glm::mat4 mv = transform_matrix * rot;
 
         diffuseColor.clear(0xff090909u);
         sgl::render::drawTrianglesZBuffer(diffuseColor, depthTexture, mv, model_vtx, model_vtx_indices);
-        /*for (auto poly = current_model.beginPolygons(); current_model.endPolygons() != poly; ++poly) {
-            int index = poly - current_model.beginPolygons();
-            srand(index*1234);
-            sgl::render::drawModelTriangles();
-            //sgl::render::drawTriangleTransform(diffuseColor, mv, glm_vec(poly.getVertex(0)), glm_vec(poly.getVertex(1)), glm_vec(poly.getVertex(2)), sf::Color(rand(), rand(), rand()));
-        }*/
 
-        /*perfClock.restart();
-        draw(image, mainClock.getElapsedTime().asMilliseconds());
-        perfTime = perfClock.getElapsedTime();*/
-
-        diffuseColor.drawTo(texture);
+        diffuseColor.drawTo(texture);*/
 
         window.setView(debugView.getView());
 
@@ -249,6 +282,8 @@ int main() {
         ImGui::SFML::Render(window);
         window.display();
     }
+
+    //glDeleteFramebuffers(1, &framebuffer);
 
     NFD_Quit();
     ImGui::SFML::Shutdown();
