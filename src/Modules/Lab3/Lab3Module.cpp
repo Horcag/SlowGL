@@ -155,7 +155,6 @@ namespace sgl {
     }
 
     void Lab3Module::drawModelPolygons(sgl::SFMLImage&image, bool useLight, bool useZBuffer) const {
-        sf::Vector3f viewDir(0.0f, 0.0f, 1.0f);
         image.clear();
         const int resolution = image.getSize().x;
 
@@ -177,32 +176,23 @@ namespace sgl {
         const glm::mat4 projection = glm::perspective(glm::radians(m_fov), aspectRatio, 0.1f, 100.0f);
 
         // Получаем матрицу трансформации от контроллера
-        const glm::mat4 modelView = m_modelController->getTransformMatrix();
-        const glm::mat4 mvp = projection * modelView;
+        const glm::mat4 model = m_modelController->getTransformMatrix();
+        const glm::mat4 mvp = projection * view * model;
 
         // Подготавливаем вершины модели
         for (auto vtx = m_currentModel.beginVertices(); vtx != m_currentModel.endVertices(); ++vtx) {
             glm::vec4 pos(vtx->x, vtx->y, vtx->z, 1.0f);
             const glm::vec4 transformed = mvp * pos;
 
-
-            if (transformed.w <= 0.001f) {
-                // Точка за камерой или на плоскости проекции - пропускаем
-                transformedVertices.emplace_back(-1.0f, -1.0f, -1.0f); // Маркер невидимой вершины
-                continue;
-            }
-
             // Преобразование из однородных координат в NDC (разделить на w)
-            float ndcX = transformed.x / transformed.w;
-            float ndcY = transformed.y / transformed.w;
-            float ndcZ = transformed.z / transformed.w;
+            // float ndcX = transformed.x / transformed.w;
+            // float ndcY = transformed.y / transformed.w;
+            // float ndcZ = transformed.z / transformed.w;
+            float ndcX = transformed.x;
+            float ndcY = transformed.y;
+            float ndcZ = transformed.z;
 
-            // Преобразование из NDC в экранные координаты
-            float halfRes = resolution * 0.5f;
-            float screenX = (ndcX + 1.0f) * halfRes;
-            float screenY = (1.0f - ndcY) * halfRes; // Инвертируем Y
-
-            transformedVertices.emplace_back(screenX, screenY, ndcZ);
+            transformedVertices.emplace_back(ndcX, ndcY, ndcZ);
         }
 
         // Отрисовываем полигоны
@@ -212,8 +202,6 @@ namespace sgl {
             const sf::Vector3f&v3 = transformedVertices[poly->vertexIndices.z];
 
             sf::Vector3f normal = calculateNormal(v1, v2, v3);
-            float dot = normal.x * viewDir.x + normal.y * viewDir.y + normal.z * viewDir.z;
-            if (dot <= 0) continue; // Пропускаем полигоны, отвернутые от камеры
             // Определяем цвет полигона
             sf::Color color;
             if (useLight) {
@@ -239,15 +227,7 @@ namespace sgl {
             }
 
             if (useZBuffer) {
-                zBuffer.resize(resolution * resolution, std::numeric_limits<float>::infinity());
                 drawTriangleWithZBuffer(image, v1, v2, v3, color, zBuffer, resolution);
-            }
-            else {
-                // Обычная отрисовка треугольника
-                sf::Vector2f p1(v1.x, v1.y);
-                sf::Vector2f p2(v2.x, v2.y);
-                sf::Vector2f p3(v3.x, v3.y);
-                sgl::render::drawTriangle(image, p1, p2, p3, color);
             }
         }
     }
