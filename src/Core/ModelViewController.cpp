@@ -83,7 +83,7 @@ glm::mat4 ModelViewController::getTransformMatrix() const {
     glm::mat4 transform = glm::mat4(1.0f);
 
     // Модель находится в начале координат
-    transform = glm::translate(transform, glm::vec3(translation.x, translation.y, 0.0f));
+    transform = glm::translate(transform, glm::vec3(translation.x, translation.y, translation.z));
 
     // Затем применяем вращения
     transform = glm::rotate(transform, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));

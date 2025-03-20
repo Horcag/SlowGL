@@ -38,11 +38,7 @@ namespace sgl {
     void Lab3Module::render(sgl::SFMLImage&image) {
         m_imageRef = &image;
         image.clear();
-
-
         drawModelPolygons(image, true, true);
-
-
         image.update();
     }
 
@@ -66,6 +62,8 @@ namespace sgl {
         if (ImGui::Button("Сбросить вращение")) {
             m_modelController->reset();
         }
+
+        ImGui::SliderFloat("FOV", &m_fov, 30.f, 120.f);
         ImGui::Spacing();
         ImGui::SeparatorText("Изображение");
 
@@ -157,6 +155,7 @@ namespace sgl {
     }
 
     void Lab3Module::drawModelPolygons(sgl::SFMLImage&image, bool useLight, bool useZBuffer) const {
+        sf::Vector3f viewDir(0.0f, 0.0f, 1.0f);
         image.clear();
         const int resolution = image.getSize().x;
 
@@ -169,18 +168,41 @@ namespace sgl {
         std::vector<sf::Vector3f> transformedVertices;
         transformedVertices.reserve(m_currentModel.get_vertex().size());
 
+        const glm::mat4 view = glm::lookAt(
+            glm::vec3(0.0f, 0.0f, 5.0f), // Позиция камеры
+            glm::vec3(0.0f, 0.0f, 0.0f), // Куда смотрит камера
+            glm::vec3(0.0f, 1.0f, 0.0f) // Вектор "вверх"
+        );
+        const float aspectRatio = 1.0f;
+        const glm::mat4 projection = glm::perspective(glm::radians(m_fov), aspectRatio, 0.1f, 100.0f);
+
         // Получаем матрицу трансформации от контроллера
-        glm::mat4 transform = m_modelController ? m_modelController->getTransformMatrix() : glm::mat4(1.0f);
+        const glm::mat4 modelView = m_modelController->getTransformMatrix();
+        const glm::mat4 mvp = projection * modelView;
 
         // Подготавливаем вершины модели
         for (auto vtx = m_currentModel.beginVertices(); vtx != m_currentModel.endVertices(); ++vtx) {
             glm::vec4 pos(vtx->x, vtx->y, vtx->z, 1.0f);
-            const glm::vec4 transformed = transform * pos;
-            transformedVertices.push_back(sf::Vector3f(
-                    transformed.x,
-                    transformed.y,
-                    transformed.z)
-            );
+            const glm::vec4 transformed = mvp * pos;
+
+
+            if (transformed.w <= 0.001f) {
+                // Точка за камерой или на плоскости проекции - пропускаем
+                transformedVertices.emplace_back(-1.0f, -1.0f, -1.0f); // Маркер невидимой вершины
+                continue;
+            }
+
+            // Преобразование из однородных координат в NDC (разделить на w)
+            float ndcX = transformed.x / transformed.w;
+            float ndcY = transformed.y / transformed.w;
+            float ndcZ = transformed.z / transformed.w;
+
+            // Преобразование из NDC в экранные координаты
+            float halfRes = resolution * 0.5f;
+            float screenX = (ndcX + 1.0f) * halfRes;
+            float screenY = (1.0f - ndcY) * halfRes; // Инвертируем Y
+
+            transformedVertices.emplace_back(screenX, screenY, ndcZ);
         }
 
         // Отрисовываем полигоны
@@ -190,17 +212,22 @@ namespace sgl {
             const sf::Vector3f&v3 = transformedVertices[poly->vertexIndices.z];
 
             sf::Vector3f normal = calculateNormal(v1, v2, v3);
+            float dot = normal.x * viewDir.x + normal.y * viewDir.y + normal.z * viewDir.z;
+            if (dot <= 0) continue; // Пропускаем полигоны, отвернутые от камеры
             // Определяем цвет полигона
             sf::Color color;
             if (useLight) {
                 float intensity = calculateLightCosine(normal, m_lightDirection);
 
-                if (intensity >= 0) {
-                    continue;
+                if (intensity < 0) {
+                    intensity = std::abs(intensity);
+                    intensity = std::max(0.2f, intensity);
+                    color = sf::Color(255 * intensity, 255 * intensity, 255 * intensity);
                 }
-                intensity = std::abs(intensity);
-                intensity = std::max(0.2f, intensity); // минимальное освещение
-                color = sf::Color(255 * intensity, 255 * intensity, 255 * intensity);
+                else {
+                    // Для задней части модели используем более тёмный цвет или пропускаем
+                    continue; // или используйте более тёмный цвет
+                }
             }
             else {
                 // Если не используем освещение, генерируем случайный цвет на основе индекса полигона
@@ -212,6 +239,7 @@ namespace sgl {
             }
 
             if (useZBuffer) {
+                zBuffer.resize(resolution * resolution, std::numeric_limits<float>::infinity());
                 drawTriangleWithZBuffer(image, v1, v2, v3, color, zBuffer, resolution);
             }
             else {
@@ -278,7 +306,7 @@ namespace sgl {
 
                 // Проверяем, находится ли точка внутри треугольника
                 if (lambda0 >= 0 && lambda1 >= 0 && lambda2 >= 0) {
-                    float z = lambda0 * v0.z + lambda1 * v1.z + lambda2 * v2.z;
+                    float z = -(lambda0 * v0.z + lambda1 * v1.z + lambda2 * v2.z);
 
                     int index = y * resolution + x;
                     if (z < zBuffer[index]) {

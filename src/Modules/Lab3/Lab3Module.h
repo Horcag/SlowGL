@@ -61,6 +61,7 @@ namespace sgl {
 
 
         sf::Vector3f m_lightDirection = {0.0f, 0.0f, 1.0f};
+        float m_fov = 45.0f;
 
         SFMLImage* m_imageRef = nullptr;
 
