@@ -12,9 +12,9 @@
 
 
 namespace sgl {
-    class Lab2Module : public IModule {
+    class Lab3Module final : public IModule {
     public:
-        Lab2Module();
+        Lab3Module();
 
         [[nodiscard]] std::string getName() const override;
 
@@ -37,19 +37,6 @@ namespace sgl {
         }
 
     private:
-        enum class PreviewMode {
-            SingleTriangle = 0,
-            MultipleTriangles,
-            ModelPolygons,
-            ModelPolygonsWithLight,
-            ModelPolygonsWithZBuffer
-        };
-
-        struct Triangle {
-            sf::Vector2f v0, v1, v2;
-            sf::Color color;
-        };
-
         bool selectModel();
 
         static void calculateModelScale(const Model3D&model, sf::Vector3f&center, float&factor, int resolution);
@@ -66,19 +53,12 @@ namespace sgl {
 
         static float calculateLightCosine(const sf::Vector3f&normal, const sf::Vector3f&light);
 
-        PreviewMode m_currentPreview = PreviewMode::SingleTriangle;
         OBJParser m_parser;
         Model3D m_currentModel;
         sf::Vector3f m_modelCenter;
         float m_modelScale = 1.0f;
         char m_filename[256] = "";
 
-        std::vector<Triangle> m_triangles;
-        int m_activeTriangleIndex = 0;
-        int m_triangleCount = 3;
-
-        bool m_animateTriangles = false;
-        float m_animationTime = 0.0f;
 
         sf::Vector3f m_lightDirection = {0.0f, 0.0f, 1.0f};
 

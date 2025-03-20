@@ -5,7 +5,7 @@
 #include <vector>
 #include <SFML/Graphics.hpp>
 #include <glm/ext/vector_uint2.hpp>
-#include <gl/glew.h>
+#include <GL/glew.h>
 
 namespace sgl {
     class BaseSurface {
@@ -18,6 +18,7 @@ namespace sgl {
         };
 
         std::unordered_map<uint32_t, std::vector<line_t>> m_lines_batch;
+
     protected:
         sf::Texture m_texture;
 
@@ -28,16 +29,20 @@ namespace sgl {
         };
 
         static std::unordered_map<std::string, shaderData> shaderMap;
-    public:
 
+    public:
         BaseSurface(uint32_t width, uint32_t height);
-        BaseSurface(glm::uvec2 size) : BaseSurface(size.x, size.y) {};
+
+        BaseSurface(glm::uvec2 size) : BaseSurface(size.x, size.y) {
+        };
 
         GLint getTextureId() const;
+
         const sf::Texture& getTexture() const { return m_texture; };
 
         void resize(uint32_t width, uint32_t height);
-        void resize(glm::uvec2 size) {resize(size.x, size.y);};
+
+        void resize(glm::uvec2 size) { resize(size.x, size.y); };
 
         glm::uvec2 getSize() const;
 
@@ -46,11 +51,14 @@ namespace sgl {
         //void setPixel(glm::uvec2 pos, sf::Color color);
 
         void drawLine(glm::uvec2 start, glm::uvec2 end, sf::Color color);
+
         void flush();
 
         ~BaseSurface();
+
     private:
         void CompileShaders();
+
         void DestroyShaders();
 
         void FlushLines();

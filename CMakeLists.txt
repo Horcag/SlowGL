@@ -24,7 +24,7 @@ FetchContent_MakeAvailable(SFML)
 FetchContent_Declare(
         glew
         GIT_REPOSITORY https://github.com/Perlmint/glew-cmake.git
-        GIT_TAG        origin/master
+        GIT_TAG origin/master
 )
 FetchContent_MakeAvailable(glew)
 
@@ -82,7 +82,11 @@ target_link_libraries(SlowGL PRIVATE sfml-graphics ImGui-SFML::ImGui-SFML nfd gl
 target_compile_features(SlowGL PRIVATE cxx_std_17)
 
 # Добавляем исполняемый файл
-add_executable(SlowGLApp src/main.cpp)
+add_executable(SlowGLApp src/main.cpp
+        src/Core/ModelViewController.cpp
+        src/Core/ModelViewController.h
+        src/Modules/Lab3/Lab3Module.h
+        src/Modules/Lab3/Lab3Module.cpp)
 target_link_libraries(SlowGLApp PRIVATE SlowGL sfml-graphics ImGui-SFML::ImGui-SFML nfd glm::glm)
 target_compile_features(SlowGLApp PRIVATE cxx_std_17)
 

@@ -5,9 +5,9 @@
 #include "Image/SFMLImage.h"
 #include "Debug/DebugView.h"
 #include "Inter-VariableFont.h"
-#include "Modules/Lab1/Lab1Module.h"
 #include <nfd.hpp>
-#include "Modules/Lab2/Lab2Module.h"
+#include "Core/ModelViewController.h"
+#include "Modules/Lab3/Lab3Module.h"
 
 void SetOptimalFontSize(const ImGuiIO&io, const sf::VideoMode&desktop) {
     constexpr float baseFontSize = 18.0f;
@@ -35,13 +35,15 @@ void SetOptimalFontSize(const ImGuiIO&io, const sf::VideoMode&desktop) {
     }
 }
 
+ModelViewController modelController;
+
 int main() {
     std::setlocale(LC_ALL, "");
     NFD::Guard nfdGuard;
     // Инициализация окна SFML
     sf::Vector2u windowSize{1280, 720};
     sf::RenderWindow window(sf::VideoMode(windowSize), "SlowGL Framework");
-    sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
+    const sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
     window.setFramerateLimit(60);
 
     // Инициализация ImGui
@@ -51,7 +53,7 @@ int main() {
     }
 
     // Настройка шрифта
-    ImGuiIO&io = ImGui::GetIO();
+    const ImGuiIO&io = ImGui::GetIO();
     SetOptimalFontSize(io, desktop);
 
     // Создание изображения для рендеринга
@@ -64,9 +66,13 @@ int main() {
     // Инициализация менеджера модулей
     sgl::ModuleManager moduleManager;
 
+    modelController.setViewportSize(resolution);
+
+    auto lab3Module = std::make_unique<sgl::Lab3Module>();
+    lab3Module->setModelController(&modelController);
     // Регистрация модулей
     // moduleManager.registerModule(std::make_unique<sgl::Lab1Module>()); // Отключаем первый модуль
-    moduleManager.registerModule(std::make_unique<sgl::Lab2Module>());
+    moduleManager.registerModule(std::move(lab3Module));
 
     sf::Clock deltaClock;
 
@@ -82,14 +88,30 @@ int main() {
             else if (auto* resized = event->getIf<sf::Event::Resized>()) {
                 windowSize = resized->size;
 
-
-                if (auto* activeModule = moduleManager.getActiveModule()) {
-                    activeModule->resize(windowSize.x, windowSize.y);
-                }
+                // if (auto* activeModule = moduleManager.getActiveModule()) {
+                //     activeModule->resize(windowSize.x, windowSize.y);
+                // }
             }
 
             // Обработка событий для DebugView если мышь не захвачена ImGui
             if (!ImGui::GetIO().WantCaptureMouse && event.has_value()) {
+                const bool ctrlPressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) ||
+                                         sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RControl);
+
+                // Обработка событий модели
+                if (event->getIf<sf::Event::MouseButtonPressed>()) {
+                    modelController.handleMousePress(*event, ctrlPressed);
+                }
+                else if (event->getIf<sf::Event::MouseButtonReleased>()) {
+                    modelController.handleMouseRelease(*event);
+                }
+                else if (event->getIf<sf::Event::MouseMoved>()) {
+                    modelController.handleMouseMove(*event);
+                }
+                else if (const auto* mouseScroll = event->getIf<sf::Event::MouseWheelScrolled>()) {
+                    modelController.zoom(mouseScroll->delta > 0 ? 1.1f : 0.9f);
+                }
+
                 debugView.ProcessEvent(event.value());
             }
 
@@ -120,6 +142,7 @@ int main() {
         if (ImGui::DragInt("Разрешение", &resolution, 1.f, 16, 4096)) {
             if (resolution > 0 && resolution <= 4096) {
                 image.resize(sf::Vector2u(resolution, resolution));
+                modelController.setViewportSize(resolution);
 
                 // Обновление размера в активном модуле
                 if (auto* activeModule = moduleManager.getActiveModule()) {
@@ -159,6 +182,7 @@ int main() {
 
         // Отрисовка
         window.setView(debugView.getView());
+
         window.clear(sf::Color(40, 40, 40));
         window.draw(image);
         ImGui::SFML::Render(window);

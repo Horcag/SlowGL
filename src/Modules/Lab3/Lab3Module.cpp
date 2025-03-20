@@ -1,4 +1,4 @@
-#include "Lab2Module.h"
+#include "Lab3Module.h"
 #include "Render/triangles.h"
 #include "Utility/FileUtils.h"
 #include "imgui.h"
@@ -9,168 +9,74 @@
 #include <vector>
 #include <future>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
 
 namespace sgl {
-    Lab2Module::Lab2Module() {
-        generateTriangles(m_triangleCount);
+    Lab3Module::Lab3Module() {
+        //
     }
 
-    std::string Lab2Module::getName() const {
-        return "Лабораторная работа 2";
+    std::string Lab3Module::getName() const {
+        return "Лабораторная работа 3";
     }
 
-    std::string Lab2Module::getDescription() const {
-        return "Барицентрические координаты и отрисовка треугольников";
+    std::string Lab3Module::getDescription() const {
+        return "Отрисовка модели";
     }
 
-    void Lab2Module::init() {
+    void Lab3Module::init() {
         if (!m_modelController) {
             std::cerr << "ModelViewController не инициализирован!" << std::endl;
             return;
         }
         m_modelController->setViewportSize(512);
-
-        generateTriangles(m_triangleCount);
     }
 
-    void Lab2Module::update(const float deltaTime) {
-        if (m_animateTriangles && m_currentPreview == PreviewMode::MultipleTriangles) {
-            m_animationTime += deltaTime;
 
-            // Обновляем положение треугольников для анимации
-            for (size_t i = 0; i < m_triangles.size(); ++i) {
-                const float angle = m_animationTime + (0.5f + static_cast<float>(i) * 0.2f);
-                const float radius = 100.0f + static_cast<float>(i) * 20.0f;
-
-                constexpr sf::Vector2f center(256.0f, 256.0f); // Центр изображения
-                m_triangles[i].v0 = center + sf::Vector2f(std::cos(angle) * radius, std::sin(angle) * radius);
-                m_triangles[i].v1 = center + sf::Vector2f(std::cos(angle + 2.0f) * radius * 0.7f,
-                                                          std::sin(angle + 2.0f) * radius * 0.7f);
-                m_triangles[i].v2 = center + sf::Vector2f(std::cos(angle + 4.0f) * radius * 0.5f,
-                                                          std::sin(angle + 4.0f) * radius * 0.5f);
-            }
-        }
-    }
-
-    void Lab2Module::render(sgl::SFMLImage&image) {
+    void Lab3Module::render(sgl::SFMLImage&image) {
         m_imageRef = &image;
         image.clear();
 
-        switch (m_currentPreview) {
-            case PreviewMode::SingleTriangle:
-                drawTriangle(image, m_activeTriangleIndex);
-                break;
 
-            case PreviewMode::MultipleTriangles:
-                for (size_t i = 0; i < m_triangles.size(); ++i) {
-                    drawTriangle(image, static_cast<int>(i));
-                }
-                break;
+        drawModelPolygons(image, true, true);
 
-            case PreviewMode::ModelPolygons:
-                drawModelPolygons(image, false, false);
-                break;
-
-            case PreviewMode::ModelPolygonsWithLight:
-                drawModelPolygons(image, true, false);
-                break;
-
-            case PreviewMode::ModelPolygonsWithZBuffer:
-                drawModelPolygons(image, true, true);
-                break;
-        }
 
         image.update();
     }
 
-    void Lab2Module::renderUI() {
-        static const char* previews[] = {
-            "1. Один треугольник",
-            "2. Несколько треугольников",
-            "3. Полигоны 3D-модели (случайные цвета)",
-            "4. Полигоны 3D-модели (с освещением)",
-            "5. Полигоны 3D-модели (с Z-буфером)"
-        };
-
-        int currentPreview = static_cast<int>(m_currentPreview);
-        if (ImGui::Combo("Режим отображения", &currentPreview, previews, IM_ARRAYSIZE(previews))) {
-            m_currentPreview = static_cast<PreviewMode>(currentPreview);
-        }
-
+    void Lab3Module::renderUI() {
         ImGui::Spacing();
         ImGui::Separator();
         ImGui::Spacing();
 
-        switch (m_currentPreview) {
-            case PreviewMode::SingleTriangle:
-                if (!m_triangles.empty()) {
-                    ImGui::DragFloat2("Вершина 1", &m_triangles[m_activeTriangleIndex].v0.x, 1.0f, 0.0f, 512.0f);
-                    ImGui::DragFloat2("Вершина 2", &m_triangles[m_activeTriangleIndex].v1.x, 1.0f, 0.0f, 512.0f);
-                    ImGui::DragFloat2("Вершина 3", &m_triangles[m_activeTriangleIndex].v2.x, 1.0f, 0.0f, 512.0f);
-
-                    float color[3] = {
-                        m_triangles[m_activeTriangleIndex].color.r / 255.0f,
-                        m_triangles[m_activeTriangleIndex].color.g / 255.0f,
-                        m_triangles[m_activeTriangleIndex].color.b / 255.0f
-                    };
-
-                    if (ImGui::ColorEdit3("Цвет треугольника", color)) {
-                        m_triangles[m_activeTriangleIndex].color.r = static_cast<uint8_t>(color[0] * 255.0f);
-                        m_triangles[m_activeTriangleIndex].color.g = static_cast<uint8_t>(color[1] * 255.0f);
-                        m_triangles[m_activeTriangleIndex].color.b = static_cast<uint8_t>(color[2] * 255.0f);
-                    }
-                }
-                break;
-
-            case PreviewMode::MultipleTriangles:
-                ImGui::SliderInt("Количество треугольников", &m_triangleCount, 1, 100);
-                if (ImGui::Button("Сгенерировать треугольники")) {
-                    generateTriangles(m_triangleCount);
-                }
-
-                ImGui::Checkbox("Анимировать", &m_animateTriangles);
-                break;
-
-            case PreviewMode::ModelPolygons:
-            case PreviewMode::ModelPolygonsWithLight:
-            case PreviewMode::ModelPolygonsWithZBuffer:
-                if (selectModel()) {
-                    const int resolution = m_imageRef ? m_imageRef->getSize().x : 512;
-                    calculateModelScale(m_currentModel, m_modelCenter, m_modelScale, resolution);
-                }
-
-                if (m_currentPreview == PreviewMode::ModelPolygonsWithLight ||
-                    m_currentPreview == PreviewMode::ModelPolygonsWithZBuffer) {
-                    ImGui::Text("Направление света:");
-                    ImGui::SliderFloat("X##light", &m_lightDirection.x, -1.0f, 1.0f);
-                    ImGui::SliderFloat("Y##light", &m_lightDirection.y, -1.0f, 1.0f);
-                    ImGui::SliderFloat("Z##light", &m_lightDirection.z, -1.0f, 1.0f);
-
-                    if (ImGui::Button("Сбросить")) {
-                        m_lightDirection = {0.0f, 0.0f, 1.0f};
-                    }
-                }
-                break;
+        if (selectModel()) {
+            const int resolution = m_imageRef ? m_imageRef->getSize().x : 512;
+            calculateModelScale(m_currentModel, m_modelCenter, m_modelScale, resolution);
         }
-        if (m_currentPreview >= PreviewMode::ModelPolygons) {
-            if (ImGui::Button("Сбросить вращение")) {
-                m_modelController->reset();
-            }
+        ImGui::Text("Направление света:");
+        ImGui::SliderFloat("X##light", &m_lightDirection.x, -1.0f, 1.0f);
+        ImGui::SliderFloat("Y##light", &m_lightDirection.y, -1.0f, 1.0f);
+        ImGui::SliderFloat("Z##light", &m_lightDirection.z, -1.0f, 1.0f);
+
+        if (ImGui::Button("Сбросить")) {
+            m_lightDirection = {0.0f, 0.0f, 1.0f};
+        }
+        if (ImGui::Button("Сбросить вращение")) {
+            m_modelController->reset();
         }
         ImGui::Spacing();
         ImGui::SeparatorText("Изображение");
 
-        ImGui::InputText("Файл", m_filename, sizeof(m_filename), ImGuiInputTextFlags_CharsNoBlank);
+        ImGui::InputText("Файл", m_filename, sizeof (m_filename), ImGuiInputTextFlags_CharsNoBlank);
         if (ImGui::Button("Сохранить как")) {
             if (sgl::utils::saveImageDialog(m_filename, sizeof(m_filename), "test.png") && m_imageRef) {
                 sgl::utils::saveImage(*m_imageRef, m_filename);
             }
         }
         ImGui::SameLine();
+
         if (ImGui::Button("Сохранить")) {
             if (m_filename[0] != '\0' && m_imageRef) {
                 sgl::utils::saveImage(*m_imageRef, m_filename);
@@ -178,16 +84,20 @@ namespace sgl {
         }
     }
 
-    void Lab2Module::handleEvent(const sf::Event&event) {
+    void Lab3Module::handleEvent(const sf::Event&event) {
         //
     }
 
 
-    void Lab2Module::resize(unsigned int width, unsigned int height) {
+    void Lab3Module::update(float deltaTime) {
+        //
+    }
+
+    void Lab3Module::resize(unsigned int width, unsigned int height) {
         calculateModelScale(m_currentModel, m_modelCenter, m_modelScale, width);
     }
 
-    bool Lab2Module::selectModel() {
+    bool Lab3Module::selectModel() {
         if (ImGui::Button("Выбрать модель")) {
             if (char filename[256]; sgl::utils::openOBJFileDialog(filename, sizeof(filename))) {
                 if (std::ifstream file(filename); file.is_open()) {
@@ -210,8 +120,6 @@ namespace sgl {
                     if (m_modelController) {
                         m_modelController->setModelBounds(mins, maxs);
                     }
-
-
                     return true;
                 }
             }
@@ -219,7 +127,7 @@ namespace sgl {
         return false;
     }
 
-    void Lab2Module::calculateModelScale(const Model3D&model, sf::Vector3f&center, float&factor, int resolution) {
+    void Lab3Module::calculateModelScale(const Model3D&model, sf::Vector3f&center, float&factor, int resolution) {
         if (model.get_vertex().empty()) return;
 
         sf::Vector3f mins{
@@ -248,14 +156,7 @@ namespace sgl {
                  2.f * 0.7f;
     }
 
-    void Lab2Module::drawTriangle(sgl::SFMLImage&image, const int index) const {
-        if (m_triangles.empty() || index < 0 || index >= static_cast<int>(m_triangles.size())) return;
-        const Triangle&tri = m_triangles[index];
-        render::drawTriangle(image, tri.v0, tri.v1, tri.v2, tri.color);
-    }
-
-
-    void Lab2Module::drawModelPolygons(sgl::SFMLImage&image, bool useLight, bool useZBuffer) const {
+    void Lab3Module::drawModelPolygons(sgl::SFMLImage&image, bool useLight, bool useZBuffer) const {
         image.clear();
         const int resolution = image.getSize().x;
 
@@ -323,41 +224,7 @@ namespace sgl {
         }
     }
 
-    void Lab2Module::generateTriangles(const int count) {
-        m_triangles.clear();
-
-        // Получаем размер изображения для корректной генерации координат
-        const int resolution = m_imageRef ? m_imageRef->getSize().x : 512;
-        const float padding = static_cast<float>(resolution) * 0.1f; // отступ от краев
-
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_real_distribution<float> dist(padding, resolution - padding);
-
-        for (int i = 0; i < count; ++i) {
-            Triangle tri;
-
-            tri.v0 = sf::Vector2f(dist(gen), dist(gen));
-            tri.v1 = sf::Vector2f(dist(gen), dist(gen));
-            tri.v2 = sf::Vector2f(dist(gen), dist(gen));
-            tri.color = getRandomColor();
-            m_triangles.push_back(tri);
-        }
-        m_activeTriangleIndex = m_triangles.empty() ? 0 : 0;
-    }
-
-    sf::Color Lab2Module::getRandomColor() {
-        static std::random_device rd;
-        static std::mt19937 gen(rd());
-        std::uniform_int_distribution<> dist(50, 255);
-
-        return {
-            static_cast<std::uint8_t>(dist(gen)), static_cast<std::uint8_t>(dist(gen)),
-            static_cast<std::uint8_t>(dist(gen))
-        };
-    }
-
-    sf::Vector3f Lab2Module::calculateNormal(const sf::Vector3f&v0, const sf::Vector3f&v1, const sf::Vector3f&v2) {
+    sf::Vector3f Lab3Module::calculateNormal(const sf::Vector3f&v0, const sf::Vector3f&v1, const sf::Vector3f&v2) {
         const sf::Vector3f edge1 = v1 - v0;
         const sf::Vector3f edge2 = v2 - v0;
 
@@ -378,12 +245,12 @@ namespace sgl {
         return normal;
     }
 
-    float Lab2Module::calculateLightCosine(const sf::Vector3f&normal, const sf::Vector3f&light) {
+    float Lab3Module::calculateLightCosine(const sf::Vector3f&normal, const sf::Vector3f&light) {
         return normal.x * light.x + normal.y * light.y + normal.z * light.z;
     }
 
 
-    void Lab2Module::drawTriangleWithZBuffer(SFMLImage&image, const sf::Vector3f&v0,
+    void Lab3Module::drawTriangleWithZBuffer(SFMLImage&image, const sf::Vector3f&v0,
                                              const sf::Vector3f&v1, const sf::Vector3f&v2, const sf::Color&color,
                                              std::vector<float>&zBuffer,
                                              const int resolution) {
