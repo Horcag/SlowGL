@@ -112,7 +112,7 @@ int main() {
                     modelController.zoom(mouseScroll->delta > 0 ? 1.1f : 0.9f);
                 }
 
-                debugView.ProcessEvent(event.value());
+                // debugView.ProcessEvent(event.value());
             }
 
             // Передача события активному модулю
@@ -183,7 +183,7 @@ int main() {
         // Отрисовка
         window.setView(debugView.getView());
 
-        window.clear(sf::Color(40, 40, 40));
+        window.clear();
         window.draw(image);
         ImGui::SFML::Render(window);
         window.display();

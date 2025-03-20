@@ -56,8 +56,8 @@ void ModelViewController::handleMouseMove(const sf::Event&event) {
 
     if (isRotating) {
         // Вращение модели (движение по X меняет Y-ось, по Y - X-ось)
-        rotation.y += delta.y * 0.5f;
         rotation.x += delta.y * 0.5f;
+        rotation.y += delta.x * 0.5f;
 
         // Ограничиваем углы для предотвращения переполнения
         while (rotation.y > 360.0f) rotation.y -= 360.0f;
