@@ -10,4 +10,4 @@ public:
     virtual Model3D parse(std::ifstream&file) const = 0;
 };
 
-#endif //PARSER_H
+#endif

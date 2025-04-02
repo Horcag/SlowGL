@@ -2,7 +2,7 @@
 
 #include "Core/IModule.h"
 #include "Parsers/OBJParser/Model3D.h"
-#include "Parsers/OBJParser/OBJParser.h"
+#include "Parsers/OBJParser/OBJParser_with_norm.h"
 #include "Image/SFMLImage.h"
 #include <string>
 #include <algorithm>
@@ -67,7 +67,7 @@ namespace sgl {
         static float calculateLightCosine(const sf::Vector3f&normal, const sf::Vector3f&light);
 
         PreviewMode m_currentPreview = PreviewMode::SingleTriangle;
-        OBJParser m_parser;
+        OBJParser_with_norm m_parser;
         Model3D m_currentModel;
         sf::Vector3f m_modelCenter;
         float m_modelScale = 1.0f;

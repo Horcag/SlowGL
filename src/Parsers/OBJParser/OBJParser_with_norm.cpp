@@ -1,4 +1,4 @@
-#include "OBJParser.h"
+#include "OBJParser_with_norm.h"
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -6,7 +6,7 @@
 #include <vector>
 #include "Model3D.h"
 
-std::vector<sf::Vector3f> OBJParser::parse_vertex(std::ifstream&file){
+std::vector<sf::Vector3f> OBJParser_with_norm::parse_vertex(std::ifstream&file){
     std::vector<sf::Vector3f> result;
     std::string line;
     double x, y, z;
@@ -26,7 +26,7 @@ std::vector<sf::Vector3f> OBJParser::parse_vertex(std::ifstream&file){
     return result;
 }
 
-std::vector<sf::Vector2f> OBJParser::parse_vertex_texture(std::ifstream&file) {
+std::vector<sf::Vector2f> OBJParser_with_norm::parse_vertex_texture(std::ifstream&file) {
     std::vector<sf::Vector2f> result;
     std::string line;
     double x, y;
@@ -46,7 +46,7 @@ std::vector<sf::Vector2f> OBJParser::parse_vertex_texture(std::ifstream&file) {
     return result;
 }
 
-std::vector<sf::Vector3f> OBJParser::parse_vertex_normal(std::ifstream&file) {
+std::vector<sf::Vector3f> OBJParser_with_norm::parse_vertex_normal(std::ifstream&file) {
     std::vector<sf::Vector3f> result;
     std::string line;
     double x, y, z;
@@ -66,7 +66,7 @@ std::vector<sf::Vector3f> OBJParser::parse_vertex_normal(std::ifstream&file) {
     return result;
 }
 
-std::vector<Face> OBJParser::parse_faces(std::ifstream&file) {
+std::vector<Face> OBJParser_with_norm::parse_faces(std::ifstream&file) {
     std::vector<Face> result;
     Face face{};
     std::string line;
@@ -110,7 +110,7 @@ std::vector<Face> OBJParser::parse_faces(std::ifstream&file) {
             result;
 }
 
-Model3D OBJParser::parse(std::ifstream&file) const {
+Model3D OBJParser_with_norm::parse(std::ifstream&file) const {
     Model3D model;
     std::vector<sf::Vector3f> vertex;
     std::vector<sf::Vector2f> vertex_texture;
