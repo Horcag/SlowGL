@@ -1,12 +1,30 @@
-#include "OBJParser_with_norm.h"
+#include "OBJParser.h"
 #include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <vector>
 #include "Model3D.h"
 
-std::vector<sf::Vector3f> OBJParser_with_norm::parse_vertex(std::ifstream&file){
+sf::Vector3f calculateNormal(const sf::Vector3f &v1, const sf::Vector3f &v2, const sf::Vector3f &v3) {
+    sf::Vector3f edge1 = v2 - v1;
+    sf::Vector3f edge2 = v3 - v1;
+
+    sf::Vector3f normal(
+        edge1.y * edge2.z - edge1.z * edge2.y,
+        edge1.z * edge2.x - edge1.x * edge2.z,
+        edge1.x * edge2.y - edge1.y * edge2.x
+    );
+
+    float length = std::sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+    normal.x /= length;
+    normal.y /= length;
+    normal.z /= length;
+    return normal;
+}
+
+std::vector<sf::Vector3f> OBJParser::parse_vertex(std::ifstream &file) {
     std::vector<sf::Vector3f> result;
     std::string line;
     double x, y, z;
@@ -16,8 +34,7 @@ std::vector<sf::Vector3f> OBJParser_with_norm::parse_vertex(std::ifstream&file){
         lineStream >> pref >> x >> y >> z;
         if (pref == "v") {
             result.emplace_back(x, y, z);
-        }
-        else if (pref == "vt") {
+        } else if (pref == "vt") {
             file.seekg(0, std::ios::beg);
             return result;
         }
@@ -26,7 +43,7 @@ std::vector<sf::Vector3f> OBJParser_with_norm::parse_vertex(std::ifstream&file){
     return result;
 }
 
-std::vector<sf::Vector2f> OBJParser_with_norm::parse_vertex_texture(std::ifstream&file) {
+std::vector<sf::Vector2f> OBJParser::parse_vertex_texture(std::ifstream &file) {
     std::vector<sf::Vector2f> result;
     std::string line;
     double x, y;
@@ -36,8 +53,7 @@ std::vector<sf::Vector2f> OBJParser_with_norm::parse_vertex_texture(std::ifstrea
         lineStream >> pref >> x >> y;
         if (pref == "vt") {
             result.emplace_back(x, y);
-        }
-        else if (pref == "vn") {
+        } else if (pref == "vn") {
             file.seekg(0, std::ios::beg);
             return result;
         }
@@ -46,7 +62,7 @@ std::vector<sf::Vector2f> OBJParser_with_norm::parse_vertex_texture(std::ifstrea
     return result;
 }
 
-std::vector<sf::Vector3f> OBJParser_with_norm::parse_vertex_normal(std::ifstream&file) {
+std::vector<sf::Vector3f> OBJParser::parse_vertex_normal(std::ifstream &file) {
     std::vector<sf::Vector3f> result;
     std::string line;
     double x, y, z;
@@ -56,8 +72,7 @@ std::vector<sf::Vector3f> OBJParser_with_norm::parse_vertex_normal(std::ifstream
         lineStream >> pref >> x >> y >> z;
         if (pref == "vn") {
             result.emplace_back(x, y, z);
-        }
-        else if (pref == "f") {
+        } else if (pref == "f") {
             file.seekg(0, std::ios::beg);
             return result;
         }
@@ -66,7 +81,7 @@ std::vector<sf::Vector3f> OBJParser_with_norm::parse_vertex_normal(std::ifstream
     return result;
 }
 
-std::vector<Face> OBJParser_with_norm::parse_faces(std::ifstream&file) {
+std::vector<Face> OBJParser::parse_faces(std::ifstream &file) {
     std::vector<Face> result;
     Face face{};
     std::string line;
@@ -110,7 +125,7 @@ std::vector<Face> OBJParser_with_norm::parse_faces(std::ifstream&file) {
             result;
 }
 
-Model3D OBJParser_with_norm::parse(std::ifstream&file) const {
+Model3D OBJParser::parse(std::ifstream &file) const {
     Model3D model;
     std::vector<sf::Vector3f> vertex;
     std::vector<sf::Vector2f> vertex_texture;
@@ -126,16 +141,13 @@ Model3D OBJParser_with_norm::parse(std::ifstream&file) const {
         if (pref == "v") {
             lineStream >> x >> y >> z;
             vertex.emplace_back(x, y, z);
-        }
-        else if (pref == "vt") {
+        } else if (pref == "vt") {
             lineStream >> x >> y;
             vertex_texture.emplace_back(x, y);
-        }
-        else if (pref == "vn") {
+        } else if (pref == "vn") {
             lineStream >> x >> y >> z;
             vertex_normal.emplace_back(x, y, z);
-        }
-        else if (pref == "f") {
+        } else if (pref == "f" && !vertex_normal.empty()) {
             for (int i = 0; i < 3; ++i) {
                 std::string faceData;
                 lineStream >> faceData;
@@ -148,11 +160,38 @@ Model3D OBJParser_with_norm::parse(std::ifstream&file) const {
                 (&face.normalIndices.x)[i]--;
             }
             faces.push_back(face);
+        } else if (pref == "f") {
+            for (int i = 0; i < 2; ++i) {
+                std::string faceData;
+                lineStream >> faceData;
+                std::replace(faceData.begin(), faceData.end(), '/', ' ');
+                std::istringstream faceDataStream(faceData);
+                faceDataStream >> (&face.vertexIndices.x)[i] >> (&face.textureIndices.x)[i]; //это безопасно честно)
+                (&face.vertexIndices.x)[i]--;
+                (&face.textureIndices.x)[i]--;
+            }
+            faces.push_back(face);
+            vertex_normal.resize(vertex.size(), sf::Vector3f(0, 0, 0));
+            for (auto &face: faces) {
+                sf::Vector3f v1 = vertex[face.vertexIndices.x];
+                sf::Vector3f v2 = vertex[face.vertexIndices.y];
+                sf::Vector3f v3 = vertex[face.vertexIndices.z];
+                sf::Vector3f normal = calculateNormal(v1, v2, v3);
+                vertex_normal[face.vertexIndices.x] += normal;
+                vertex_normal[face.vertexIndices.y] += normal;
+                vertex_normal[face.vertexIndices.z] += normal;
+            }
+            for (auto &normal: vertex_normal) {
+                float length = std::sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+                normal.x /= length;
+                normal.y /= length;
+                normal.z /= length;
+            }
         }
+        model.set_vertex(vertex);
+        model.set_vertex_texture(vertex_texture);
+        model.set_vertex_normal(vertex_normal);
+        model.set_faces(faces);
+        return model;
     }
-    model.set_vertex(vertex);
-    model.set_vertex_texture(vertex_texture);
-    model.set_vertex_normal(vertex_normal);
-    model.set_faces(faces);
-    return model;
 }

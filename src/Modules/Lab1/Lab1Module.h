@@ -2,7 +2,7 @@
 
 #include "Core/IModule.h"
 #include "Parsers/OBJParser/Model3D.h"
-#include "Parsers/OBJParser/OBJParser_with_norm.h"
+#include "Parsers/OBJParser/OBJParser.h"
 #include "Image/SFMLImage.h"
 #include <string>
 
@@ -40,7 +40,7 @@ namespace sgl {
             int dotted_line_dots = 128; ///< Количество точек для пунктирной линии
         } m_lineOptions;
 
-        OBJParser_with_norm m_parser; ///< Парсер для OBJ файлов
+        OBJParser m_parser; ///< Парсер для OBJ файлов
         Model3D m_currentModel; ///< Текущая 3D-модель
         sf::Vector3f m_modelCenter; ///< Центр модели
         float m_modelScale = 1.0f; ///< Масштаб модели

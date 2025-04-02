@@ -6,7 +6,7 @@
 #include "Model3D.h"
 
 
-class OBJParser_with_norm final : public Parser {
+class OBJParser final : public Parser {
 public:
     static std::vector<sf::Vector3f> parse_vertex(std::ifstream&file);
 

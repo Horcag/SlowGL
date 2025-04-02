@@ -8,7 +8,7 @@
 #include "Debug/DebugView.h"
 #include "Inter-VariableFont.h"
 #include "Parsers/OBJParser/Model3D.h"
-#include "Parsers/OBJParser/OBJParser_with_norm.h"
+#include "Parsers/OBJParser/OBJParser.h"
 #include <fstream>
 #include <string>
 #include <nfd.hpp>
@@ -192,7 +192,7 @@ bool model_select(char* filename) {
 }
 
 bool model_selector(Model3D&model) {
-    static OBJParser_with_norm parser;
+    static OBJParser parser;
     static char filename[255]{};
     if (model_select(filename)) {
         std::ifstream ifs(filename);
