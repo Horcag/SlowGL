@@ -131,67 +131,76 @@ Model3D OBJParser::parse(std::ifstream &file) const {
     std::vector<sf::Vector2f> vertex_texture;
     std::vector<sf::Vector3f> vertex_normal;
     std::vector<Face> faces;
-    Face face{};
+    bool is_norm = false;
     std::string line;
-    double x, y, z;
+    while (std::getline(file, line)) {
+        if (line.find("vn") == 0) {
+            is_norm = true;
+            break;
+        }
+    }
+    file.seekg(0, std::ios::beg);
     while (std::getline(file, line)) {
         std::istringstream lineStream(line);
         std::string pref;
         lineStream >> pref;
+
         if (pref == "v") {
+            double x, y, z;
             lineStream >> x >> y >> z;
             vertex.emplace_back(x, y, z);
         } else if (pref == "vt") {
+            double x, y;
             lineStream >> x >> y;
             vertex_texture.emplace_back(x, y);
         } else if (pref == "vn") {
+            double x, y, z;
             lineStream >> x >> y >> z;
             vertex_normal.emplace_back(x, y, z);
-        } else if (pref == "f" && !vertex_normal.empty()) {
+        } else if (pref == "f") {
+            Face face;
             for (int i = 0; i < 3; ++i) {
                 std::string faceData;
                 lineStream >> faceData;
                 std::replace(faceData.begin(), faceData.end(), '/', ' ');
                 std::istringstream faceDataStream(faceData);
-                faceDataStream >> (&face.vertexIndices.x)[i] >> (&face.textureIndices.x)[i] >> (&face.normalIndices.x)[
-                    i]; //это безопасно честно)
-                (&face.vertexIndices.x)[i]--;
-                (&face.textureIndices.x)[i]--;
-                (&face.normalIndices.x)[i]--;
+
+                int vIdx = -1, tIdx = -1, nIdx = -1;
+                faceDataStream >> vIdx;
+                if (faceDataStream >> tIdx && is_norm)
+                    faceDataStream >> nIdx;
+                if (vIdx > 0) (&face.vertexIndices.x)[i] = vIdx - 1;
+                if (tIdx > 0) (&face.textureIndices.x)[i] = tIdx - 1;
+                if (nIdx > 0) (&face.normalIndices.x)[i] = nIdx - 1;
             }
             faces.push_back(face);
-        } else if (pref == "f") {
-            for (int i = 0; i < 2; ++i) {
-                std::string faceData;
-                lineStream >> faceData;
-                std::replace(faceData.begin(), faceData.end(), '/', ' ');
-                std::istringstream faceDataStream(faceData);
-                faceDataStream >> (&face.vertexIndices.x)[i] >> (&face.textureIndices.x)[i]; //это безопасно честно)
-                (&face.vertexIndices.x)[i]--;
-                (&face.textureIndices.x)[i]--;
-            }
-            faces.push_back(face);
-            vertex_normal.resize(vertex.size(), sf::Vector3f(0, 0, 0));
-            for (auto &face: faces) {
-                sf::Vector3f v1 = vertex[face.vertexIndices.x];
-                sf::Vector3f v2 = vertex[face.vertexIndices.y];
-                sf::Vector3f v3 = vertex[face.vertexIndices.z];
-                sf::Vector3f normal = calculateNormal(v1, v2, v3);
-                vertex_normal[face.vertexIndices.x] += normal;
-                vertex_normal[face.vertexIndices.y] += normal;
-                vertex_normal[face.vertexIndices.z] += normal;
-            }
-            for (auto &normal: vertex_normal) {
-                float length = std::sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
-                normal.x /= length;
-                normal.y /= length;
-                normal.z /= length;
-            }
         }
-        model.set_vertex(vertex);
-        model.set_vertex_texture(vertex_texture);
-        model.set_vertex_normal(vertex_normal);
-        model.set_faces(faces);
-        return model;
     }
+    if (!is_norm && !vertex.empty()) {
+        vertex_normal.resize(vertex.size(), sf::Vector3f(0, 0, 0));
+
+        for (auto &face: faces) {
+            sf::Vector3f v1 = vertex[face.vertexIndices.x];
+            sf::Vector3f v2 = vertex[face.vertexIndices.y];
+            sf::Vector3f v3 = vertex[face.vertexIndices.z];
+
+            sf::Vector3f normal = calculateNormal(v1, v2, v3);
+
+            vertex_normal[face.vertexIndices.x] += normal;
+            vertex_normal[face.vertexIndices.y] += normal;
+            vertex_normal[face.vertexIndices.z] += normal;
+        }
+
+        for (auto &normal: vertex_normal) {
+            float length = std::sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+            normal.x /= length;
+            normal.y /= length;
+            normal.z /= length;
+        }
+    }
+    model.set_vertex(vertex);
+    model.set_vertex_texture(vertex_texture);
+    model.set_vertex_normal(vertex_normal);
+    model.set_faces(faces);
+    return model;
 }
