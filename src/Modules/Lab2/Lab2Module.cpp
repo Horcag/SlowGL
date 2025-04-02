@@ -11,6 +11,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <iostream>
+
 
 namespace sgl {
     Lab2Module::Lab2Module() {
@@ -26,6 +28,12 @@ namespace sgl {
     }
 
     void Lab2Module::init() {
+        if (!m_modelController) {
+            std::cerr << "ModelViewController не инициализирован!" << std::endl;
+            return;
+        }
+        m_modelController->setViewportSize(512);
+
         generateTriangles(m_triangleCount);
     }
 
@@ -44,13 +52,6 @@ namespace sgl {
                                                           std::sin(angle + 2.0f) * radius * 0.7f);
                 m_triangles[i].v2 = center + sf::Vector2f(std::cos(angle + 4.0f) * radius * 0.5f,
                                                           std::sin(angle + 4.0f) * radius * 0.5f);
-            }
-        }
-
-        if (m_animateModel) {
-            m_rotationX += 45.0f * deltaTime;
-            if (m_rotationX >= 360.0f) {
-                m_rotationX -= 360.0f;
             }
         }
     }
@@ -156,16 +157,9 @@ namespace sgl {
                 break;
         }
         if (m_currentPreview >= PreviewMode::ModelPolygons) {
-            ImGui::SeparatorText("Вращение модели");
-            ImGui::SliderFloat("Поворот X", &m_rotationX, 0.0f, 360.0f);
-            ImGui::SliderFloat("Поворот Y", &m_rotationY, 0.0f, 360.0f);
-            ImGui::SliderFloat("Поворот Z", &m_rotationZ, 0.0f, 360.0f);
-
             if (ImGui::Button("Сбросить вращение")) {
-                m_rotationX = m_rotationY = m_rotationZ = 0.0f;
+                m_modelController->reset();
             }
-
-            ImGui::Checkbox("Автоматическое вращение", &m_animateModel);
         }
         ImGui::Spacing();
         ImGui::SeparatorText("Изображение");
@@ -185,8 +179,9 @@ namespace sgl {
     }
 
     void Lab2Module::handleEvent(const sf::Event&event) {
-        // Пусто для этого модуля
+        //
     }
+
 
     void Lab2Module::resize(unsigned int width, unsigned int height) {
         calculateModelScale(m_currentModel, m_modelCenter, m_modelScale, width);
@@ -198,6 +193,25 @@ namespace sgl {
                 if (std::ifstream file(filename); file.is_open()) {
                     m_currentModel = m_parser.parse(file);
                     file.close();
+
+                    glm::vec3 mins(FLT_MAX), maxs(-FLT_MAX);
+
+                    for (auto vtx = m_currentModel.beginVertices(); vtx != m_currentModel.endVertices(); ++vtx) {
+                        mins.x = std::min(mins.x, vtx->x);
+                        mins.y = std::min(mins.y, vtx->y);
+                        mins.z = std::min(mins.z, vtx->z);
+
+                        maxs.x = std::max(maxs.x, vtx->x);
+                        maxs.y = std::max(maxs.y, vtx->y);
+                        maxs.z = std::max(maxs.z, vtx->z);
+                    }
+
+                    // Явный вызов setModelBounds после загрузки модели
+                    if (m_modelController) {
+                        m_modelController->setModelBounds(mins, maxs);
+                    }
+
+
                     return true;
                 }
             }
@@ -244,7 +258,6 @@ namespace sgl {
     void Lab2Module::drawModelPolygons(sgl::SFMLImage&image, bool useLight, bool useZBuffer) const {
         image.clear();
         const int resolution = image.getSize().x;
-        const sf::Vector3f resolutionCenter(resolution / 2.0f, resolution / 2.0f, resolution / 2.0f);
 
         std::vector<float> zBuffer;
         if (useZBuffer) {
@@ -255,18 +268,18 @@ namespace sgl {
         std::vector<sf::Vector3f> transformedVertices;
         transformedVertices.reserve(m_currentModel.get_vertex().size());
 
+        // Получаем матрицу трансформации от контроллера
+        glm::mat4 transform = m_modelController ? m_modelController->getTransformMatrix() : glm::mat4(1.0f);
+
         // Подготавливаем вершины модели
         for (auto vtx = m_currentModel.beginVertices(); vtx != m_currentModel.endVertices(); ++vtx) {
-            // Сначала смещаем относительно центра модели
-            sf::Vector3f centered = *vtx - m_modelCenter;
-
-            // Применяем масштабирование
-            sf::Vector3f scaled = centered * m_modelScale;
-
-            // Применяем вращение
-            sf::Vector3f transformed = applyRotation(scaled + resolutionCenter);
-
-            transformedVertices.push_back(transformed);
+            glm::vec4 pos(vtx->x, vtx->y, vtx->z, 1.0f);
+            const glm::vec4 transformed = transform * pos;
+            transformedVertices.push_back(sf::Vector3f(
+                    transformed.x,
+                    transformed.y,
+                    transformed.z)
+            );
         }
 
         // Отрисовываем полигоны
@@ -369,40 +382,11 @@ namespace sgl {
         return normal.x * light.x + normal.y * light.y + normal.z * light.z;
     }
 
-    sf::Vector3f Lab2Module::applyRotation(const sf::Vector3f&point) const {
-        const int resolution = m_imageRef->getSize().x;
-        // Создаем единичную матрицу
-        glm::mat4 rotationMatrix = glm::mat4(1.0f);
-
-        // Центр вращения - это центр экрана
-        glm::vec3 center(resolution / 2.0f, resolution / 2.0f, resolution / 2.0f);
-
-        // Смещаем к началу координат
-        glm::mat4 translateToOrigin = glm::translate(glm::mat4(1.0f), -center);
-
-        // Поворачиваем вокруг осей (радианы)
-        glm::mat4 rotateX = glm::rotate(glm::mat4(1.0f), glm::radians(m_rotationX), glm::vec3(1.0f, 0.0f, 0.0f));
-        glm::mat4 rotateY = glm::rotate(glm::mat4(1.0f), glm::radians(m_rotationY), glm::vec3(0.0f, 1.0f, 0.0f));
-        glm::mat4 rotateZ = glm::rotate(glm::mat4(1.0f), glm::radians(m_rotationZ), glm::vec3(0.0f, 0.0f, 1.0f));
-
-        // Смещаем обратно
-        glm::mat4 translateBack = glm::translate(glm::mat4(1.0f), center);
-
-        // Комбинируем матрицы
-        rotationMatrix = translateBack * rotateZ * rotateY * rotateX * translateToOrigin;
-
-        // Применяем трансформацию к точке
-        glm::vec4 glmPoint(point.x, point.y, point.z, 1.0f);
-        glm::vec4 transformed = rotationMatrix * glmPoint;
-
-        return sf::Vector3f(transformed.x, transformed.y, transformed.z);
-    }
-
 
     void Lab2Module::drawTriangleWithZBuffer(SFMLImage&image, const sf::Vector3f&v0,
                                              const sf::Vector3f&v1, const sf::Vector3f&v2, const sf::Color&color,
                                              std::vector<float>&zBuffer,
-                                             int resolution) {
+                                             const int resolution) {
         int minX = std::max(0, static_cast<int>(std::min({v0.x, v1.x, v2.x})));
         int maxX = std::min(resolution - 1, static_cast<int>(std::max({v0.x, v1.x, v2.x})));
         int minY = std::max(0, static_cast<int>(std::min({v0.y, v1.y, v2.y})));

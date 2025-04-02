@@ -26,7 +26,7 @@ namespace sgl {
         }
     }
 
-    IModule* ModuleManager::getActiveModule() {
+    IModule* ModuleManager::getActiveModule() const {
         return currentModule;
     }
 

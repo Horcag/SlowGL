@@ -22,6 +22,7 @@ namespace sgl {
         };
 
         std::unordered_map<uint32_t, std::vector<line_t>> m_lines_batch;
+
     protected:
         sf::Texture m_texture;
 
@@ -35,15 +36,18 @@ namespace sgl {
 
         GLuint m_depthTexture = 0;
     public:
-
         BaseSurface(uint32_t width, uint32_t height);
-        BaseSurface(glm::uvec2 size) : BaseSurface(size.x, size.y) {};
+
+        BaseSurface(glm::uvec2 size) : BaseSurface(size.x, size.y) {
+        };
 
         GLint getTextureId() const;
+
         const sf::Texture& getTexture() const { return m_texture; };
 
         void resize(uint32_t width, uint32_t height);
-        void resize(glm::uvec2 size) {resize(size.x, size.y);};
+
+        void resize(glm::uvec2 size) { resize(size.x, size.y); };
 
         glm::uvec2 getSize() const;
 
@@ -54,11 +58,14 @@ namespace sgl {
         void drawTri(glm::vec2 v0, glm::vec2 v1, glm::vec2 v2, sf::Color color);
         void drawTris(const glm::mat4 transform, const std::vector<glm::vec3>& vertex, const std::vector<glm::uvec3>& indices, sf::Color color);
         void drawLine(glm::uvec2 start, glm::uvec2 end, sf::Color color);
+
         void flush();
 
         ~BaseSurface();
+
     private:
         void CompileShaders();
+
         void DestroyShaders();
 
         void FlushLines();

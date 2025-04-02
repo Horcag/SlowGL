@@ -22,7 +22,7 @@
 #include "Utility/glm_converters.h"
 #include "Render/triangles.h"
 #include <iostream>
-#include <gl/glew.h>
+#include <GL//glew.h>
 #include "Surface/BaseSurface.h"
 
 void draw(sgl::SFMLImage&image, int64_t time) {
@@ -67,20 +67,20 @@ bool model_select(char* filename) {
     return false;
 }
 
-void decompose_model(std::vector<glm::vec3>& vertexes, std::vector<glm::uvec3>& indices, const Model3D& model){
-    const auto& model_vtx = model.get_vertex();
+void decompose_model(std::vector<glm::vec3>&vertexes, std::vector<glm::uvec3>&indices, const Model3D&model) {
+    const auto&model_vtx = model.get_vertex();
     vertexes.resize(model_vtx.size());
-    for(size_t i = 0; i < model_vtx.size(); i++){
+    for (size_t i = 0; i < model_vtx.size(); i++) {
         vertexes[i] = glm_vec(model_vtx[i]);
     }
-    const auto& model_faces = model.get_faces();
+    const auto&model_faces = model.get_faces();
     indices.resize(model_faces.size());
-    for(size_t i = 0; i < model_faces.size(); i++){
+    for (size_t i = 0; i < model_faces.size(); i++) {
         indices[i] = glm_ivec(model_faces[i].vertexIndices);
     }
 }
 
-bool model_selector(Model3D &model) {
+bool model_selector(Model3D&model) {
     static OBJParser parser;
     static char filename[255]{};
     if (model_select(filename)) {
@@ -164,7 +164,7 @@ void drawTrianglesBuffer(sgl::BaseSurface& target, const glm::mat4 transform, co
     glm::vec2 image_size = target.getSize();
     static std::vector<glm::vec2> transformed;
     transformed.resize(vertex.size());
-    for(size_t i = 0; i < vertex.size(); i++){
+    for (size_t i = 0; i < vertex.size(); i++) {
         transformed[i] = (glm::vec2(transform * glm::vec4(vertex[i], 1.f)) + glm::vec2(1.f, 1.f)) * image_size / 2.f;
     }
 

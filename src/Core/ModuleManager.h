@@ -34,7 +34,7 @@ namespace sgl {
          * @brief Возвращает указатель на активный модуль
          * @return Указатель на активный модуль или nullptr, если активного модуля нет
          */
-        IModule* getActiveModule();
+        [[nodiscard]] IModule* getActiveModule() const;
 
         /**
          * @brief Возвращает список всех зарегистрированных модулей
