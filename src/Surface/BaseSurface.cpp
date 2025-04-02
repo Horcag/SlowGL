@@ -3,7 +3,7 @@
 #include "shaders.h"
 #include <glm/ext/vector_uint4.hpp>
 #include <glm/trigonometric.hpp>
-
+#include <cfloat>
 sgl::BaseSurface::BaseSurface(uint32_t width, uint32_t height) : m_texture(sf::Vector2u(width, height))
 {
     resize(width, height);
