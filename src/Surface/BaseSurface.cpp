@@ -139,9 +139,9 @@ void sgl::BaseSurface::drawTris(const glm::mat4 transform, const std::vector<glm
     //glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(ucolor) + sizeof(transform) + sizeof(camera), sizeof(index), &index);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, shader.UBO[0]);
 
-    const int block_size = 8;
-    const int block_size_z = 8;
-    const int block_size_zz = 1;
+    const int block_size = 4;
+    const int block_size_z = 1;
+    const int block_size_zz = 8;
 
     int i = 0;
     while(i < indices.size()){
@@ -154,12 +154,12 @@ void sgl::BaseSurface::drawTris(const glm::mat4 transform, const std::vector<glm
             const glm::uvec3 index = indices[i];
             //if(transformed[index.x].w < 0.0001f && transformed[index.y].w < 0.0001f && transformed[index.z].w < 0.0001f) continue;
 
-            const glm::vec3 v0 = vertex[index.x];
-            const glm::vec3 v1 = vertex[index.y];
-            const glm::vec3 v2 = vertex[index.z];
+            //const glm::vec3 v0 = vertex[index.x];
+            //const glm::vec3 v1 = vertex[index.y];
+            //const glm::vec3 v2 = vertex[index.z];
 
-            glm::vec3 normal = glm::normalize(glm::cross(v1 - v2, v1 - v0));
-            if(glm::dot(normal, camera) >= glm::cos(glm::radians(30.f))) continue;
+            //glm::vec3 normal = glm::normalize(glm::cross(v1 - v2, v1 - v0));
+            //if(glm::dot(normal, camera) >= glm::cos(glm::radians(30.f))) continue;
 
             const glm::vec4 v0t = transformed[index.x];
             const glm::vec4 v1t = transformed[index.y];
@@ -174,7 +174,8 @@ void sgl::BaseSurface::drawTris(const glm::mat4 transform, const std::vector<glm
         }
 
         glDispatchCompute(max_diffs.x, max_diffs.y, block_size_zz);
-        glMemoryBarrier(GL_ALL_BARRIER_BITS);
+        glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT);
+        //glMemoryBarrier(GL_ALL_BARRIER_BITS);
     }
     //exit(0);
     //printf("%d\n", glGetError());
