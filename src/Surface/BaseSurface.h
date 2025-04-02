@@ -5,6 +5,10 @@
 #include <vector>
 #include <SFML/Graphics.hpp>
 #include <glm/ext/vector_uint2.hpp>
+#include <glm/ext/vector_uint3.hpp>
+#include <glm/ext/vector_float2.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/ext/matrix_float4x4.hpp>
 #include <gl/glew.h>
 
 namespace sgl {
@@ -24,10 +28,12 @@ namespace sgl {
         struct shaderData {
             GLuint program;
             GLuint shader;
-            GLuint UBO;
+            GLuint UBO[4];
         };
 
         static std::unordered_map<std::string, shaderData> shaderMap;
+
+        GLuint m_depthTexture = 0;
     public:
 
         BaseSurface(uint32_t width, uint32_t height);
@@ -45,6 +51,8 @@ namespace sgl {
 
         //void setPixel(glm::uvec2 pos, sf::Color color);
 
+        void drawTri(glm::vec2 v0, glm::vec2 v1, glm::vec2 v2, sf::Color color);
+        void drawTris(const glm::mat4 transform, const std::vector<glm::vec3>& vertex, const std::vector<glm::uvec3>& indices, sf::Color color);
         void drawLine(glm::uvec2 start, glm::uvec2 end, sf::Color color);
         void flush();
 

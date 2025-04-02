@@ -135,25 +135,46 @@ void SetOptimalFontSize(const ImGuiIO&io, const sf::VideoMode&desktop) {
     }
 }
 
-void drawTrianglesBuffer(sgl::BaseSurface& target, const glm::mat4 transform, const std::vector<glm::vec3> vertex, const std::vector<glm::uvec3> indices)
+void drawLinesBuffer(sgl::BaseSurface& target, const glm::mat4 transform, const std::vector<glm::vec3>& vertex, const std::vector<glm::uvec3>& indices)
+{
+    glm::vec2 image_size = target.getSize();
+    static std::vector<glm::vec4> transformed;
+    transformed.resize(vertex.size());
+    for(size_t i = 0; i < vertex.size(); i++){
+        transformed[i] = (glm::vec4(transform * glm::vec4(vertex[i], 1.f))/* + glm::vec4(1.f, 1.f,0.f,0.f)*/) * glm::vec4(image_size/2.f,1.f,1.f);
+        //target.setPixel(*transformed, sf::Color::Blue);
+    }
+
+    for(size_t i= 0; i < indices.size(); i++){
+        const glm::uvec3 index = indices[i];
+        if(transformed[index.x].w < 0.0001f && transformed[index.y].w < 0.0001f && transformed[index.z].w < 0.0001f) continue;
+
+        const glm::vec4 v0t = (transformed[index.x]/transformed[index.x].w) + glm::vec4(image_size/2.f,0.f,0.f);
+        const glm::vec4 v1t = (transformed[index.y]/transformed[index.y].w) + glm::vec4(image_size/2.f,0.f,0.f);
+        const glm::vec4 v2t = (transformed[index.z]/transformed[index.z].w) + glm::vec4(image_size/2.f,0.f,0.f);
+        
+        target.drawLine(v0t, v1t, sf::Color::Red);
+        target.drawLine(v1t, v2t, sf::Color::Red);
+        target.drawLine(v0t, v2t, sf::Color::Red);
+    }
+}
+
+void drawTrianglesBuffer(sgl::BaseSurface& target, const glm::mat4 transform, const std::vector<glm::vec3>& vertex, const std::vector<glm::uvec3>& indices)
 {
     glm::vec2 image_size = target.getSize();
     static std::vector<glm::vec2> transformed;
     transformed.resize(vertex.size());
     for(size_t i = 0; i < vertex.size(); i++){
         transformed[i] = (glm::vec2(transform * glm::vec4(vertex[i], 1.f)) + glm::vec2(1.f, 1.f)) * image_size / 2.f;
-        //target.setPixel(*transformed, sf::Color::Blue);
     }
-    
+
     for(size_t i= 0; i < indices.size(); i++){
         const glm::uvec3 index = indices[i];
         const glm::vec2 v0t = transformed[index.x];
         const glm::vec2 v1t = transformed[index.y];
         const glm::vec2 v2t = transformed[index.z];
         
-        target.drawLine(v0t, v1t, sf::Color::Red);
-        target.drawLine(v1t, v2t, sf::Color::Green);
-        target.drawLine(v0t, v2t, sf::Color::Blue);
+        target.drawTri(v0t, v1t, v2t, sf::Color::Red);
     }
 }
 
@@ -186,7 +207,7 @@ int main() {
     ImGuiIO&io = ImGui::GetIO();
     SetOptimalFontSize(io, desktop);
 
-    int resolution = 128;
+    int resolution = 512;
 
     sgl::BaseSurface surface(resolution, resolution);
 
@@ -213,6 +234,8 @@ int main() {
                 debugView.ProcessEvent(event.value());
             }
         }
+
+        if(!window.isOpen()) break;
 
 
         const sf::Time dt = deltaClock.restart();
@@ -258,12 +281,20 @@ int main() {
             //calc_model_scale(current_model, model_center, model_scale, resolution);
         }
 
+        glm::mat4 rot = glm::rotate(glm::mat4(1.f), glm::radians(timeClock.getElapsedTime().asSeconds() * 10), glm::vec3(0,1,0));
+        glm::mat4 view = glm::lookAt(glm::vec3(0.f,0.05f,0.15f), glm::vec3(0.f,0.05f,0.0f), glm::vec3(0.f,-1.f,0.f));
+        glm::mat4 projection = glm::perspective(glm::radians(60.f), 1.f, 0.1f, 10.f);
+        glm::mat4 mv = projection * view * rot;
+
         ImGui::End();
 
-        surface.clear(sf::Color::Black);
+        surface.clear(sf::Color(10,10,10));
 
-        drawTrianglesBuffer(surface, transform_matrix, model_vtx, model_vtx_indices);
-        surface.flush();
+        //surface.drawTri({0,0}, {64,64}, {64,0}, sf::Color::Blue);
+        
+        surface.drawTris(mv, model_vtx, model_vtx_indices, sf::Color::Red);
+        //drawLinesBuffer(surface, mv, model_vtx, model_vtx_indices);
+        //surface.flush();
 
         /*glm::mat4 rot = glm::rotate(glm::mat4(1.f), glm::radians(timeClock.getElapsedTime().asSeconds() * 10), glm::vec3(0,1,0));
         glm::mat4 translate = glm::translate(glm::mat4(1.f), glm::vec3(100,0,0));
