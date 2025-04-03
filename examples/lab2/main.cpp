@@ -67,7 +67,7 @@ bool model_select(char* filename) {
     return false;
 }
 
-void decompose_model(std::vector<glm::vec3>&vertexes, std::vector<glm::uvec3>&indices, const Model3D&model) {
+void decompose_model(std::vector<glm::vec3>&vertexes, std::vector<glm::uvec3>&indices, std::vector<glm::uvec3>&uv_idx, std::vector<glm::vec2>&uv, std::vector<glm::uvec3>&normal_idx, std::vector<glm::vec3>&normal, const Model3D&model) {
     const auto&model_vtx = model.get_vertex();
     vertexes.resize(model_vtx.size());
     for (size_t i = 0; i < model_vtx.size(); i++) {
@@ -75,8 +75,22 @@ void decompose_model(std::vector<glm::vec3>&vertexes, std::vector<glm::uvec3>&in
     }
     const auto&model_faces = model.get_faces();
     indices.resize(model_faces.size());
+    uv_idx.resize(model_faces.size());
+    normal_idx.resize(model_faces.size());
     for (size_t i = 0; i < model_faces.size(); i++) {
         indices[i] = glm_ivec(model_faces[i].vertexIndices);
+        uv_idx[i] = glm_ivec(model_faces[i].textureIndices);
+        normal_idx[i] = glm_ivec(model_faces[i].normalIndices);
+    }
+    const auto&model_uv = model.get_vertex_texture();
+    uv.resize(model_uv.size());
+    for (size_t i = 0; i < model_uv.size(); i++) {
+        uv[i] = glm_vec(model_uv[i]);
+    }
+    const auto&model_normal = model.get_vertex_normal();
+    normal.resize(model_normal.size());
+    for (size_t i = 0; i < model_normal.size(); i++) {
+        normal[i] = glm_vec(model_normal[i]);
     }
 }
 
@@ -190,6 +204,9 @@ int main() {
         return -1;
     }
 
+    sf::Texture tex;
+    printf("load %d\n", tex.loadFromFile("C:/users/kot/desktop/bunny-atlas.jpg"));
+
     glewInit();
 
     /*sf::ContextSettings settings = window.getSettings();
@@ -201,7 +218,11 @@ int main() {
 
     Model3D current_model;
     std::vector<glm::vec3> model_vtx;
+    std::vector<glm::vec3> model_normal;
     std::vector<glm::uvec3> model_vtx_indices;
+    std::vector<glm::uvec3> model_vtx_uv;
+    std::vector<glm::uvec3> model_vtx_normal;
+    std::vector<glm::vec2> model_uv;
     glm::mat4 transform_matrix = glm::ortho(-1.f, 1.f, -1.f, 1.f);
 
     ImGuiIO&io = ImGui::GetIO();
@@ -277,7 +298,7 @@ int main() {
             mins *= 1.3f;
             maxs *= 1.3f;
             transform_matrix = glm::ortho(mins.x, maxs.x, mins.y, maxs.y);
-            decompose_model(model_vtx, model_vtx_indices, current_model);
+            decompose_model(model_vtx, model_vtx_indices, model_vtx_uv, model_uv, model_vtx_normal, model_normal, current_model);
             //calc_model_scale(current_model, model_center, model_scale, resolution);
         }
 
@@ -292,7 +313,7 @@ int main() {
 
         //surface.drawTri({0,0}, {64,64}, {64,0}, sf::Color::Blue);
         
-        surface.drawTris(mv, model_vtx, model_vtx_indices, sf::Color::Red);
+        surface.drawTris(mv, model_vtx, model_vtx_indices, model_vtx_uv, model_uv, model_vtx_normal, model_normal, tex);
         //drawLinesBuffer(surface, mv, model_vtx, model_vtx_indices);
         //surface.flush();
 

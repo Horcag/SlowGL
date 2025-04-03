@@ -29,7 +29,7 @@ namespace sgl {
         struct shaderData {
             GLuint program;
             GLuint shader;
-            GLuint UBO[4];
+            GLuint UBO[8];
         };
 
         static std::unordered_map<std::string, shaderData> shaderMap;
@@ -56,7 +56,7 @@ namespace sgl {
         //void setPixel(glm::uvec2 pos, sf::Color color);
 
         void drawTri(glm::vec2 v0, glm::vec2 v1, glm::vec2 v2, sf::Color color);
-        void drawTris(const glm::mat4 transform, const std::vector<glm::vec3>& vertex, const std::vector<glm::uvec3>& indices, sf::Color color);
+        void drawTris(const glm::mat4 transform, const std::vector<glm::vec3> &vertex, const std::vector<glm::uvec3> &indices, const std::vector<glm::uvec3> &uv_idx, const std::vector<glm::vec2> &uv, const std::vector<glm::uvec3> &normal_idx, const std::vector<glm::vec3> &normal, const sf::Texture& tex);
         void drawLine(glm::uvec2 start, glm::uvec2 end, sf::Color color);
 
         void flush();

@@ -94,9 +94,14 @@ void sgl::BaseSurface::drawTri(glm::vec2 v0, glm::vec2 v1, glm::vec2 v2, sf::Col
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // unbind
 }
 
-void sgl::BaseSurface::drawTris(const glm::mat4 transform, const std::vector<glm::vec3> &vertex, const std::vector<glm::uvec3> &indices, sf::Color color)
+void sgl::BaseSurface::drawTris(const glm::mat4 transform, const std::vector<glm::vec3> &vertex, const std::vector<glm::uvec3> &indices, const std::vector<glm::uvec3> &uv_idx, const std::vector<glm::vec2> &uv, const std::vector<glm::uvec3> &normal_idx, const std::vector<glm::vec3> &normal, const sf::Texture& tex)
 {
     if(!indices.size()) return;
+
+    sf::Texture::bind(&tex);
+    GLint whichID;
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &whichID);
+    sf::Texture::bind(nullptr);
 
     glm::vec2 image_size = getSize();
     std::vector<glm::vec4> transformed(vertex.size(), glm::vec4());
@@ -111,31 +116,56 @@ void sgl::BaseSurface::drawTris(const glm::mat4 transform, const std::vector<glm
     glUseProgram(shader.program);
     glBindImageTexture(0, getTextureId(), 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA8UI);
     glBindImageTexture(1, m_depthTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
+    glBindImageTexture(7, whichID, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA8UI);
 
-    glm::uvec4 ucolor(color.r, color.g, color.b, 255);
+    struct IndexData {
+        glm::uvec4 vertex;
+        glm::uvec4 uv;
+        glm::uvec4 normal;
+    };
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, shader.UBO[1]);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::uvec4)*indices.size(), NULL, GL_STREAM_COPY);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(IndexData)*indices.size(), NULL, GL_STREAM_COPY);
     for(size_t i = 0; i < indices.size(); i++){
-        glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::uvec4)*i, sizeof(glm::uvec3), &indices.data()[i]);
+        IndexData indexData {glm::uvec4(indices[i], 0), glm::uvec4(uv_idx[i], 0), glm::uvec4(normal_idx[i], 0)};
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(indexData)*i, sizeof(indexData), &indexData);
     }
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, shader.UBO[1]);
 
+    struct VertexData {
+        glm::vec4 original;
+        glm::vec4 transformed;
+        glm::vec2 uv;
+        glm::vec2 pad; //struct size is aligned to vec4
+    };
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, shader.UBO[2]);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, (sizeof(glm::vec4)*2ull)*vertex.size(), NULL, GL_STREAM_COPY);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, (sizeof(VertexData))*vertex.size(), NULL, GL_STREAM_COPY);
     for(size_t i = 0; i < vertex.size(); i++){
-        glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4)*i*2, sizeof(glm::vec3), &vertex.data()[i]);
-        glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4)*(i*2+1), sizeof(glm::vec4), &transformed.data()[i]);
+        VertexData vertexData{glm::vec4(vertex[i], 0.f), transformed[i], glm::vec2(), glm::vec2()};
+        
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(vertexData)*i, sizeof(vertexData), &vertexData);
     }
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, shader.UBO[2]);
 
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, shader.UBO[3]);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, (sizeof(glm::vec2))*uv.size(), NULL, GL_STREAM_COPY);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, (sizeof(glm::vec2))*uv.size(), uv.data());
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, shader.UBO[3]);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, shader.UBO[4]);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, (sizeof(glm::vec4))*normal.size(), NULL, GL_STREAM_COPY);
+    for(size_t i = 0; i < normal.size(); i++){
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4)*i, sizeof(glm::vec3), &normal.data()[i]);
+    }
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, shader.UBO[4]);
+
     //const int index = 0;
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, shader.UBO[0]);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(ucolor) + sizeof(transform) + sizeof(camera) + sizeof(int), NULL, GL_STREAM_COPY);
-    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(ucolor), &ucolor);
-    glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(ucolor), sizeof(transform), &transform);
-    glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(ucolor) + sizeof(transform), sizeof(camera), &camera);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(transform) + sizeof(camera) + sizeof(int), NULL, GL_STREAM_COPY);
+    //glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(ucolor), &ucolor);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(transform), &transform);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(transform), sizeof(camera), &camera);
     //glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(ucolor) + sizeof(transform) + sizeof(camera), sizeof(index), &index);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, shader.UBO[0]);
 
@@ -147,7 +177,7 @@ void sgl::BaseSurface::drawTris(const glm::mat4 transform, const std::vector<glm
     while(i < indices.size()){
         glm::ivec2 max_diffs = glm::ivec2();
 
-        glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(ucolor) + sizeof(transform) + sizeof(camera), sizeof(i), &i);
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(transform) + sizeof(camera), sizeof(i), &i);
 
         for(int j = 0; j < block_size_z * block_size_zz; j++, i++){
             if(i >= indices.size()) break;
@@ -251,7 +281,7 @@ void sgl::BaseSurface::CompileShaders()
 
     shaderData triTransDepthShader;
     compileShader(sgl::shaders::tri_batch_depthtest_projection_shader_src, triTransDepthShader.shader, triTransDepthShader.program);
-    glGenBuffers(3, triTransDepthShader.UBO);
+    glGenBuffers(4, triTransDepthShader.UBO);
     shaderMap.emplace("tri_trd_batch", triTransDepthShader);
 }
 
