@@ -50,11 +50,30 @@ inline std::vector<sf::Vector3f> compute_transformed_vertices(const Model3D&mode
 
 bool model_select(char* filename) {
     ImGui::InputText("3D model", filename, 255, ImGuiInputTextFlags_CharsNoBlank);
-    if (ImGui::Button("Select file")) {
+    if (ImGui::Button("Select file##model")) {
         NFD::UniquePath outPath;
         constexpr nfdfilteritem_t filterItem[1] = {{"3D model", "obj"}};
 
         if (const nfdresult_t save_result = NFD::OpenDialog(outPath, filterItem, 1); save_result == NFD_OKAY) {
+            strncpy(filename, outPath.get(), 255);
+            return true;
+        }
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("Open##model")) return true;
+
+    return false;
+}
+
+bool image_select(char* filename) {
+    ImGui::InputText("Texture", filename, 255, ImGuiInputTextFlags_CharsNoBlank);
+    if (ImGui::Button("Select file")) {
+        NFD::UniquePath outPath;
+        constexpr nfdfilteritem_t filterItem[2] = {{"Image/jpg", "jpg"}, {"Image/png", "png"}};
+
+        if (const nfdresult_t save_result = NFD::OpenDialog(outPath, filterItem, 2); save_result == NFD_OKAY) {
             strncpy(filename, outPath.get(), 255);
             return true;
         }
@@ -205,7 +224,7 @@ int main() {
     }
 
     sf::Texture tex;
-    printf("load %d\n", tex.loadFromFile("C:/users/kot/desktop/bunny-atlas.jpg"));
+    //printf("load %d\n", tex.loadFromFile("C:/users/kot/desktop/bunny-atlas.jpg"));
 
     glewInit();
 
@@ -300,6 +319,10 @@ int main() {
             transform_matrix = glm::ortho(mins.x, maxs.x, mins.y, maxs.y);
             decompose_model(model_vtx, model_vtx_indices, model_vtx_uv, model_uv, model_vtx_normal, model_normal, current_model);
             //calc_model_scale(current_model, model_center, model_scale, resolution);
+        }
+        static char texture_path[255];
+        if(image_select(texture_path)){
+            printf("load %d", tex.loadFromFile(texture_path));
         }
 
         glm::mat4 rot = glm::rotate(glm::mat4(1.f), glm::radians(timeClock.getElapsedTime().asSeconds() * 10), glm::vec3(0,1,0));

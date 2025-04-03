@@ -4,6 +4,9 @@
 #include <glm/ext/vector_uint4.hpp>
 #include <glm/trigonometric.hpp>
 #include <cfloat>
+
+std::atomic_uint32_t sgl::BaseSurface::m_num_objects = 0;
+
 sgl::BaseSurface::BaseSurface(uint32_t width, uint32_t height) : m_texture(sf::Vector2u(width, height))
 {
     resize(width, height);
@@ -281,7 +284,7 @@ void sgl::BaseSurface::CompileShaders()
 
     shaderData triTransDepthShader;
     compileShader(sgl::shaders::tri_batch_depthtest_projection_shader_src, triTransDepthShader.shader, triTransDepthShader.program);
-    glGenBuffers(4, triTransDepthShader.UBO);
+    glGenBuffers(5, triTransDepthShader.UBO);
     shaderMap.emplace("tri_trd_batch", triTransDepthShader);
 }
 

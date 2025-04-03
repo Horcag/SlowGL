@@ -14,7 +14,7 @@
 namespace sgl {
     class BaseSurface {
     private:
-        std::atomic_uint32_t m_num_objects;
+        static std::atomic_uint32_t m_num_objects;
 
         struct line_t {
             glm::uvec2 start;
